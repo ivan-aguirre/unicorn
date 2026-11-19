@@ -1,0 +1,5 @@
+# Normaliza finais de linha entre Linux, macOS e Windows.
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.png binary
+*.ico binary

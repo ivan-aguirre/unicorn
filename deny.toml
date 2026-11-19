@@ -1,0 +1,37 @@
+# cargo-deny: vulnerabilidades (RustSec), licenças, crates proibidos e origens.
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+yanked = "deny"
+# Exceções sem correção disponível, revisadas a cada atualização do macroquad.
+ignore = [
+    # Soundness da API global do macroquad (ex.: uso fora da thread principal). O jogo só
+    # chama o macroquad na thread principal e não processa arquivos nem rede.
+    { id = "RUSTSEC-2025-0035", reason = "uso single-thread; sem entrada não confiável" },
+    # ttf-parser sem manutenção (via fontdue, do macroquad). O jogo usa fonte própria em
+    # pixel art e não carrega arquivos de fonte.
+    { id = "RUSTSEC-2026-0192", reason = "nenhuma fonte externa é carregada" },
+]
+
+[licenses]
+version = 2
+confidence-threshold = 0.9
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-3-Clause",
+    "Zlib",
+]
+
+[licenses.private]
+ignore = true
+
+[bans]
+multiple-versions = "allow"
+wildcards = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

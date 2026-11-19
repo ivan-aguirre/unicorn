@@ -1,0 +1,49 @@
+# --- Rust ---
+/target/
+**/*.rs.bk
+*.pdb
+# Cargo.lock É versionado (aplicação, builds reproduzíveis).
+
+# --- Cobertura / profiling ---
+*.profraw
+*.profdata
+lcov.info
+/coverage/
+perf.data*
+flamegraph.svg
+
+# --- Logs ---
+*.log
+
+# --- Editores / IDEs ---
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+*~
+.fleet/
+.zed/
+
+# --- macOS ---
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# --- Windows ---
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# --- Linux ---
+.directory
+.Trash-*
+.nfs*
+
+# --- Claude Code (configurações pessoais) ---
+.claude/settings.local.json

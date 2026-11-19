@@ -1,0 +1,14 @@
+#!/bin/sh
+# Bloqueia o commit se o linter não estiver zerado ou algum teste falhar.
+# Ativado por scripts/setup.sh (git config core.hooksPath .githooks).
+set -eu
+
+# Garante cargo no PATH em shells de IDEs/GUIs que não carregam o perfil.
+if ! command -v cargo >/dev/null 2>&1 && [ -f "$HOME/.cargo/env" ]; then
+    . "$HOME/.cargo/env"
+fi
+
+if ! "$(git rev-parse --show-toplevel)/scripts/check.sh"; then
+    printf '\n\033[31mCommit bloqueado:\033[0m corrija o linter/testes acima.\n' >&2
+    exit 1
+fi

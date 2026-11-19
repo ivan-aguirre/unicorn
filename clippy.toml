@@ -1,0 +1,12 @@
+# Limites de complexidade (linter agressivo), os mesmos do projeto Fono.
+cognitive-complexity-threshold = 15
+too-many-lines-threshold = 50
+too-many-arguments-threshold = 5
+excessive-nesting-threshold = 4
+type-complexity-threshold = 150
+# Em testes, unwrap/expect/panic/indexação são aceitáveis.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-panic-in-tests = true
+allow-indexing-slicing-in-tests = true
+allow-print-in-tests = true
