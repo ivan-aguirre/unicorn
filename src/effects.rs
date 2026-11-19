@@ -11,7 +11,7 @@ pub const MAX_PARTICLES: usize = 256;
 pub const CELEBRATION_TIME: f32 = 3.5;
 const SPARKLES_PER_HEART: u8 = 8;
 const CELEBRATION_PARTICLES: u8 = 72;
-const PARTICLE_GRAVITY: f32 = 160.0;
+const PARTICLE_GRAVITY: f32 = 270.0;
 
 /// Aparência de uma partícula.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -53,7 +53,7 @@ impl Effects {
     pub fn sparkle(&mut self, at: Vec2) {
         for i in 0..SPARKLES_PER_HEART {
             let angle = std::f32::consts::TAU * f32::from(i) / f32::from(SPARKLES_PER_HEART);
-            let speed = range(&mut self.rng, 50.0, 80.0);
+            let speed = range(&mut self.rng, 85.0, 135.0);
             let vel = Vec2::from_angle(angle) * speed;
             self.push(Particle {
                 pos: at,
@@ -75,11 +75,11 @@ impl Effects {
             };
             let pos = Vec2::new(
                 range(&mut self.rng, view_x, view_x + view_w),
-                range(&mut self.rng, -60.0, -8.0),
+                range(&mut self.rng, -100.0, -14.0),
             );
             let vel = Vec2::new(
-                range(&mut self.rng, -30.0, 30.0),
-                range(&mut self.rng, 10.0, 60.0),
+                range(&mut self.rng, -50.0, 50.0),
+                range(&mut self.rng, 16.0, 100.0),
             );
             let life = range(&mut self.rng, 2.0, CELEBRATION_TIME);
             self.push(Particle {

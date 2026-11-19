@@ -10,30 +10,33 @@ use crate::input::Input;
 use crate::level::Level;
 
 /// Meia largura da caixa de colisão.
-pub const HALF_W: f32 = 7.0;
+pub const HALF_W: f32 = 11.0;
 /// Altura da caixa de colisão.
-pub const HEIGHT: f32 = 28.0;
+pub const HEIGHT: f32 = 46.0;
 /// Altura máxima do pulo (pés acima do ponto de partida).
-pub const JUMP_HEIGHT: f32 = 64.0;
+pub const JUMP_HEIGHT: f32 = 106.0;
 /// Gravidade, em px/s².
-pub const GRAVITY: f32 = 900.0;
+pub const GRAVITY: f32 = 1500.0;
 /// Velocidade inicial do pulo: `sqrt(2 * GRAVITY * JUMP_HEIGHT)`.
-const JUMP_SPEED: f32 = 339.411;
+const JUMP_SPEED: f32 = 563.915;
 /// Velocidade máxima andando.
-pub const MAX_SPEED: f32 = 110.0;
-const GROUND_ACCEL: f32 = 650.0;
-const AIR_ACCEL: f32 = 480.0;
-const FRICTION: f32 = 900.0;
-const MAX_FALL: f32 = 420.0;
+pub const MAX_SPEED: f32 = 185.0;
+const GROUND_ACCEL: f32 = 1080.0;
+const AIR_ACCEL: f32 = 800.0;
+const FRICTION: f32 = 1500.0;
+const MAX_FALL: f32 = 700.0;
 /// Tempo, após sair de uma beira, em que ainda dá para pular.
 const COYOTE_TIME: f32 = 0.1;
 /// Tempo em que um toque em espaço fica guardado antes de tocar o chão.
 const JUMP_BUFFER: f32 = 0.15;
 /// Abaixo desta velocidade o unicórnio é considerado parado.
-const WALK_THRESHOLD: f32 = 8.0;
+const WALK_THRESHOLD: f32 = 13.0;
 /// Quadros da caminhada e duração de cada um na velocidade máxima.
-pub const WALK_FRAMES: u8 = 4;
-const WALK_FRAME_TIME: f32 = 0.11;
+pub const WALK_FRAMES: u8 = 6;
+const WALK_FRAME_TIME: f32 = 0.085;
+/// Quadros da respiração (parado) e duração de cada um.
+pub const IDLE_FRAMES: u8 = 4;
+const IDLE_FRAME_TIME: f32 = 0.4;
 /// Intervalo entre piscadas e duração da piscada.
 const BLINK_EVERY: f32 = 3.2;
 const BLINK_FOR: f32 = 0.16;
@@ -67,7 +70,11 @@ enum Support {
 /// Pose de animação, derivada do estado físico.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Pose {
-    Idle { blink: bool },
+    /// Parado, respirando (`breath` de 0 a 3), às vezes piscando.
+    Idle {
+        breath: u8,
+        blink: bool,
+    },
     Walk(u8),
     Jump,
     Fall,
@@ -75,17 +82,17 @@ pub enum Pose {
 
 impl Pose {
     /// Quantidade de quadros distintos de animação.
-    pub const COUNT: usize = 8;
+    pub const COUNT: usize = 13;
 
     /// Índice do quadro na folha de sprites.
     #[must_use]
     pub fn index(self) -> usize {
         match self {
-            Self::Idle { blink: false } => 0,
-            Self::Idle { blink: true } => 1,
-            Self::Walk(frame) => 2 + usize::from(frame % WALK_FRAMES),
-            Self::Jump => 6,
-            Self::Fall => 7,
+            Self::Idle { blink: true, .. } => 4,
+            Self::Idle { breath, .. } => usize::from(breath % IDLE_FRAMES),
+            Self::Walk(frame) => 5 + usize::from(frame % WALK_FRAMES),
+            Self::Jump => 11,
+            Self::Fall => 12,
         }
     }
 }
@@ -163,7 +170,11 @@ impl Player {
         if self.vel.x.abs() > WALK_THRESHOLD {
             return Pose::Walk(self.walk_frame);
         }
+        let breath = self.idle_clock % (IDLE_FRAME_TIME * f32::from(IDLE_FRAMES));
         Pose::Idle {
+            breath: u8::from(breath >= IDLE_FRAME_TIME)
+                + u8::from(breath >= IDLE_FRAME_TIME * 2.0)
+                + u8::from(breath >= IDLE_FRAME_TIME * 3.0),
             blink: self.idle_clock % BLINK_EVERY > BLINK_EVERY - BLINK_FOR,
         }
     }
@@ -373,7 +384,7 @@ mod tests {
         }
         let height = 160.0 - apex;
         assert!(
-            (height - JUMP_HEIGHT).abs() < 2.0,
+            (height - JUMP_HEIGHT).abs() < JUMP_HEIGHT * 0.03,
             "altura do pulo = {height}"
         );
         assert!(p.on_ground());
@@ -495,23 +506,40 @@ mod tests {
         let mut blinked = false;
         for _ in 0..steps(BLINK_EVERY + 0.1) {
             p.update(Input::default(), &level, STEP);
-            blinked |= p.pose() == Pose::Idle { blink: true };
+            blinked |= matches!(p.pose(), Pose::Idle { blink: true, .. });
         }
         assert!(blinked);
     }
 
     #[test]
+    fn parado_respira_em_ciclo() {
+        let level = flat();
+        let mut p = Player::spawn(&level, 300.0);
+        let mut breaths = Vec::new();
+        for _ in 0..steps(IDLE_FRAME_TIME.mul_add(4.0, -0.05)) {
+            p.update(Input::default(), &level, STEP);
+            if let Pose::Idle { breath, .. } = p.pose() {
+                breaths.push(breath);
+            }
+        }
+        breaths.dedup();
+        assert_eq!(breaths, [0, 1, 2, 3]);
+    }
+
+    #[test]
     fn indices_de_pose_sao_unicos_e_cabem_na_folha() {
-        let poses = [
-            Pose::Idle { blink: false },
-            Pose::Idle { blink: true },
-            Pose::Walk(0),
-            Pose::Walk(1),
-            Pose::Walk(2),
-            Pose::Walk(3),
-            Pose::Jump,
-            Pose::Fall,
-        ];
+        let mut poses: Vec<Pose> = (0..IDLE_FRAMES)
+            .map(|breath| Pose::Idle {
+                breath,
+                blink: false,
+            })
+            .collect();
+        poses.push(Pose::Idle {
+            breath: 0,
+            blink: true,
+        });
+        poses.extend((0..WALK_FRAMES).map(Pose::Walk));
+        poses.extend([Pose::Jump, Pose::Fall]);
         let mut seen: Vec<usize> = poses.iter().map(|p| p.index()).collect();
         seen.sort_unstable();
         seen.dedup();

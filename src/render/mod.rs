@@ -43,11 +43,12 @@ impl Renderer {
         }
     }
 
-    /// Desenha um quadro do jogo e o amplia na janela.
-    pub fn draw(&self, game: &Game) {
+    /// Desenha um quadro do jogo e o amplia na janela. `quit_progress` (0 a 1) mostra o
+    /// aviso de saída enquanto Esc está segurado.
+    pub fn draw(&self, game: &Game, quit_progress: f32) {
         set_camera(&self.camera);
         scene::draw(&self.textures, game);
-        hud::draw(&self.textures, game);
+        hud::draw(&self.textures, game, quit_progress);
         self.present();
     }
 

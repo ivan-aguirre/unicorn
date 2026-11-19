@@ -3,11 +3,15 @@
 pub mod pixmap;
 pub mod procedural;
 pub mod sprites;
+pub mod unicorn;
 
 use pixmap::{ArtError, Pixmap, rgb};
-use sprites::{EYE_AT, EYE_CLOSED, LEGS_Y, OUTLINE, PALETTE, UNICORN_BODY};
+use sprites::{OUTLINE, PALETTE};
 
 use crate::level::scenery::FlowerColor;
+
+/// Tamanho do recheio do coração coletável (o contorno acrescenta 1 pixel em volta).
+pub const HEART_SIZE: (u16, u16) = (21, 19);
 
 /// Imagens prontas para virar texturas.
 #[derive(Debug, Clone)]
@@ -40,9 +44,9 @@ impl Art {
         let outline = rgb(OUTLINE);
         let sprite = |rows: &[&str]| Pixmap::from_ascii(rows, PALETTE).map(|p| p.outlined(outline));
         Ok(Self {
-            unicorn: unicorn_frames()?,
-            heart: sprite(sprites::HEART)?,
-            heart_small: sprite(sprites::HEART_SMALL)?,
+            unicorn: unicorn::frames()?,
+            heart: procedural::heart(HEART_SIZE.0, HEART_SIZE.1),
+            heart_small: procedural::heart(11, 10),
             star: sprite(sprites::STAR)?,
             sparkle: Pixmap::from_ascii(sprites::SPARKLE, PALETTE)?,
             flowers: [
@@ -82,71 +86,11 @@ pub const fn flower_index(color: FlowerColor) -> usize {
     }
 }
 
-/// Quadros do unicórnio: pernas + corpo (com balanço) + olho, e o contorno por fim.
-fn unicorn_frames() -> Result<Vec<Pixmap>, ArtError> {
-    use sprites::{LEGS_JUMP, LEGS_PASS, LEGS_STAND, LEGS_STRIDE_A, LEGS_STRIDE_B};
-    // Na ordem de `Pose::index`.
-    let frames = [
-        Frame::new(LEGS_STAND),
-        Frame {
-            blink: true,
-            ..Frame::new(LEGS_STAND)
-        },
-        Frame::bobbing(LEGS_STRIDE_A),
-        Frame::new(LEGS_PASS),
-        Frame::bobbing(LEGS_STRIDE_B),
-        Frame::new(LEGS_PASS),
-        Frame::new(LEGS_JUMP),
-        Frame::new(LEGS_STAND),
-    ];
-    frames.iter().map(Frame::render).collect()
-}
-
-/// Receita de um quadro do unicórnio.
-struct Frame {
-    legs: &'static [&'static str],
-    /// Corpo 1 pixel mais baixo (pernas abertas na passada).
-    bob: bool,
-    blink: bool,
-}
-
-impl Frame {
-    const fn new(legs: &'static [&'static str]) -> Self {
-        Self {
-            legs,
-            bob: false,
-            blink: false,
-        }
-    }
-
-    const fn bobbing(legs: &'static [&'static str]) -> Self {
-        Self {
-            bob: true,
-            ..Self::new(legs)
-        }
-    }
-
-    fn render(&self) -> Result<Pixmap, ArtError> {
-        let mut body = Pixmap::from_ascii(UNICORN_BODY, PALETTE)?;
-        if self.blink {
-            body.overlay(
-                &Pixmap::from_ascii(EYE_CLOSED, PALETTE)?,
-                EYE_AT.0,
-                EYE_AT.1,
-            );
-        }
-        let legs = Pixmap::from_ascii(self.legs, PALETTE)?;
-        let mut frame = Pixmap::new(body.width(), LEGS_Y + legs.height());
-        frame.overlay(&legs, 0, LEGS_Y);
-        frame.overlay(&body, 0, u16::from(self.bob));
-        Ok(frame.outlined(rgb(OUTLINE)))
-    }
-}
-
 /// Ícone quadrado (RGBA, `size` x `size`) com a cabeça do unicórnio, ampliada sem borrar.
 #[must_use]
 pub fn icon(frame: &Pixmap, size: u16) -> Vec<u8> {
-    let crop = frame.width().min(frame.height()).max(1);
+    // A cabeça ocupa o quadrado de cima do quadro.
+    let crop = frame.width().min(frame.height()).max(1) - 4;
     let mut out = Pixmap::new(size, size);
     for (x, y) in out.coords() {
         let source = (x * crop / size.max(1), y * crop / size.max(1));
@@ -195,8 +139,9 @@ mod tests {
                 .iter()
                 .all(|f| (f.width(), f.height()) == (first.width(), first.height()))
         );
-        assert_ne!(art.unicorn[0], art.unicorn[1], "piscar muda o quadro");
-        assert_ne!(art.unicorn[2], art.unicorn[4], "passadas diferentes");
+        assert_ne!(art.unicorn[0], art.unicorn[4], "piscar muda o quadro");
+        assert_ne!(art.unicorn[5], art.unicorn[7], "passadas diferentes");
+        assert!(art.heart.width() > 20, "corações grandes");
     }
 
     #[test]

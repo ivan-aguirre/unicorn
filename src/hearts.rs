@@ -9,19 +9,19 @@ use crate::level::{self, Level};
 use crate::view::VIEW_W;
 
 /// Tamanho da caixa de colisão de um coração.
-pub const SIZE: f32 = 10.0;
+pub const SIZE: f32 = 18.0;
 /// Altura do centro de um coração "no chão" (alcançável andando).
-pub const LOW: f32 = 12.0;
+pub const LOW: f32 = 20.0;
 /// Faixa de altura de um coração "no alto" (exige pulo), acima do chão.
-pub const HIGH: (f32, f32) = (44.0, 58.0);
+pub const HIGH: (f32, f32) = (74.0, 96.0);
 /// Distância entre corações na distribuição inicial.
-const SPACING: (f32, f32) = (64.0, 150.0);
+const SPACING: (f32, f32) = (110.0, 250.0);
 /// Chance (em %) de um coração ficar no alto.
 const HIGH_CHANCE: u8 = 35;
 /// Espera até um coração coletado reaparecer em outro lugar.
 const RESPAWN_DELAY: (f32, f32) = (0.6, 2.5);
 /// Distância além da borda da tela onde novos corações surgem.
-const SPAWN_AHEAD: (f32, f32) = (24.0, 360.0);
+const SPAWN_AHEAD: (f32, f32) = (40.0, 600.0);
 /// Limite de corações vivos (memória e custo constantes).
 pub const MAX_HEARTS: usize = 600;
 
@@ -58,7 +58,7 @@ impl Hearts {
     #[must_use]
     pub fn new(level: &Level, mut rng: Rng) -> Self {
         let mut items = Vec::new();
-        let mut x = range(&mut rng, 160.0, 220.0);
+        let mut x = range(&mut rng, 270.0, 370.0);
         let end = level.length() - 32.0;
         for _ in 0..MAX_HEARTS {
             if x >= end {

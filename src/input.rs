@@ -111,6 +111,33 @@ impl InputLatch {
     }
 }
 
+/// Quanto tempo segurar Esc para sair: um toque acidental (de criança) não fecha o jogo.
+pub const QUIT_HOLD: f32 = 1.5;
+
+/// Conta quanto tempo Esc ficou segurado.
+#[derive(Debug, Default)]
+pub struct QuitHold {
+    held_for: f32,
+}
+
+impl QuitHold {
+    /// Atualiza com o estado da tecla. Devolve `true` quando é hora de sair.
+    pub fn update(&mut self, held: bool, dt: f32) -> bool {
+        self.held_for = if held {
+            self.held_for + dt.max(0.0)
+        } else {
+            0.0
+        };
+        self.held_for >= QUIT_HOLD
+    }
+
+    /// Progresso até sair, de 0 a 1 (para desenhar a barra).
+    #[must_use]
+    pub fn progress(&self) -> f32 {
+        (self.held_for / QUIT_HOLD).min(1.0)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -163,5 +190,23 @@ mod tests {
         latch.feed(tap);
         let next = latch.feed(Input::default());
         assert!(next.jump.pressed && !next.jump.held);
+    }
+
+    #[test]
+    fn sair_exige_segurar_esc() {
+        let mut quit = QuitHold::default();
+        for _ in 0..10 {
+            assert!(!quit.update(true, 0.1));
+        }
+        assert!(quit.progress() > 0.6 && quit.progress() < 0.7);
+        // Soltar zera: toques soltos nunca fecham o jogo.
+        assert!(!quit.update(false, 0.1));
+        assert!(quit.progress().abs() < f32::EPSILON);
+        let mut closed = false;
+        for _ in 0..16 {
+            closed |= quit.update(true, 0.1);
+        }
+        assert!(closed);
+        assert!((quit.progress() - 1.0).abs() < f32::EPSILON);
     }
 }

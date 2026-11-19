@@ -147,7 +147,7 @@ fn coracoes_continuam_aparecendo_durante_o_jogo() {
         }
     };
     let events = play(&mut game, 120, back_and_forth);
-    assert!(events.hearts > 20, "coletou {}", events.hearts);
+    assert!(events.hearts > 10, "coletou {}", events.hearts);
     // Os coletados reapareceram em outro lugar: o total se mantém.
     let now = game.hearts.len() + game.hearts.pending();
     assert_eq!(now, at_start);

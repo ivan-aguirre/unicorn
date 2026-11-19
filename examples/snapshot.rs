@@ -15,13 +15,13 @@ use unicorn::player::Player;
 use unicorn::render::Renderer;
 
 /// Posições do nível a fotografar (x do unicórnio).
-const SPOTS: [f32; 6] = [96.0, 1500.0, 4200.0, 9000.0, 17_000.0, 32_600.0];
+const SPOTS: [f32; 6] = [160.0, 2500.0, 7000.0, 15_000.0, 28_000.0, 54_200.0];
 
 fn conf() -> Conf {
     Conf {
         window_title: String::from("Unicórnio - capturas"),
-        window_width: 768,
-        window_height: 432,
+        window_width: 1280,
+        window_height: 720,
         ..Default::default()
     }
 }
@@ -43,7 +43,7 @@ async fn main() {
         save(&renderer, &format!("{dir}/cena_{i}.png"));
     }
 
-    teleport(&mut game, 2600.0);
+    teleport(&mut game, 4300.0);
     game.effects.celebrate(game.camera.x, unicorn::view::VIEW_W);
     settle(&mut game, &renderer, Input::default(), 50).await;
     save(&renderer, &format!("{dir}/festa.png"));
@@ -51,6 +51,10 @@ async fn main() {
     game.mode = Mode::Paused;
     settle(&mut game, &renderer, Input::default(), 2).await;
     save(&renderer, &format!("{dir}/pausa.png"));
+
+    renderer.draw(&game, 0.6);
+    next_frame().await;
+    save(&renderer, &format!("{dir}/sair.png"));
 
     sprite_sheet(&art, &format!("{dir}/sprites.png"));
 }
@@ -65,7 +69,7 @@ fn teleport(game: &mut Game, x: f32) {
 async fn settle(game: &mut Game, renderer: &Renderer, input: Input, frames: u32) {
     for _ in 0..frames {
         game.step(input, 1.0 / 60.0);
-        renderer.draw(game);
+        renderer.draw(game, 0.0);
         next_frame().await;
     }
 }

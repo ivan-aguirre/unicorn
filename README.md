@@ -14,11 +14,12 @@ Não há como perder: o objetivo é só explorar e juntar corações.
 | Seta esquerda | Anda para a esquerda |
 | Espaço | Pula (segurar continua pulando) |
 | Enter | Pausa / continua |
+| Esc (segurar ~1,5 s) | Sai do jogo (um toque rápido não faz nada) |
 | F11 | Tela cheia / janela |
 
 ## Regras do jogo
 
-- **Um único nível, bem longo**: 32.768 px (~85 telas, alguns minutos de caminhada), com aclives,
+- **Um único nível, bem longo**: 54.400 px (85 telas, alguns minutos de caminhada), com aclives,
   declives suaves e plataformas flutuantes. O cenário é sempre o mesmo (semente fixa).
 - **Corações** espalhados por todo o nível: uns junto ao chão, outros no alto (só pulando) ou
   sobre plataformas. A posição deles muda a cada partida.
@@ -92,7 +93,7 @@ src/
   clock.rs      passo fixo de simulação
   art/          pixel art em memória: sprites ASCII, imagens geradas, contorno automático
   audio/        efeitos sonoros sintetizados (WAV gerado em código)
-  render/       desenho em tela virtual 384x216 ampliada, HUD, pausa e festa
+  render/       desenho em tela virtual 640x360 ampliada, HUD, pausa, festa e saída
 ```
 
 A lógica não depende da janela: tudo em `level/`, `player`, `hearts`, `game`, `art` e
@@ -103,11 +104,14 @@ A lógica não depende da janela: tudo em `level/`, `player`, `hearts`, `game`, 
 - **[macroquad](https://github.com/not-fl3/macroquad)**: biblioteca 2D madura e leve em Rust,
   sem dependências nativas no Windows/macOS; compila rápido e gera um executável pequeno.
   (Bevy seria pesado demais; SDL2/raylib exigiriam bibliotecas C.)
-- **Arte e som gerados no código**: sprites desenhados em ASCII (`src/art/sprites.rs`), céu,
+- **Arte e som gerados no código**: cabeça do unicórnio desenhada em ASCII e corpo, pernas,
+  braços e cauda gerados por ângulos (`src/art/unicorn.rs`: caminhada de 6 quadros,
+  respiração, piscada, pulo e queda); coração pela curva clássica do coração; céu,
   sol, nuvens, arco-íris, árvores e texturas do chão gerados por funções, sons sintetizados.
   Resultado: um único executável, sem pasta de assets nem licenças de terceiros.
-- **Pixel art nítida**: tudo é desenhado numa tela virtual de 384x216 e ampliado com filtro
-  "nearest" (escala inteira sempre que possível); posições arredondadas ao pixel.
+- **Pixel art nítida**: tudo é desenhado numa tela virtual de 640x360 e ampliado com filtro
+  "nearest" (escala inteira sempre que possível: 2x em 720p, 3x em 1080p, 4x em 1440p);
+  posições arredondadas ao pixel.
 - **Leveza**: só o visível é desenhado (busca binária nas listas ordenadas), toda a arte fica
   num atlas (poucas trocas de textura), limites fixos de corações e partículas. Medido no
   build de release: ~2% de um núcleo de CPU.

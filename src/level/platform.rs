@@ -5,13 +5,13 @@ use fastrand::Rng;
 use super::terrain::Terrain;
 
 /// Espessura visual da plataforma (o corpo de terra abaixo da grama).
-pub const THICKNESS: f32 = 10.0;
+pub const THICKNESS: f32 = 16.0;
 /// Alturas possíveis do topo em relação ao chão mais alto abaixo dela.
-const HEIGHTS: [f32; 3] = [40.0, 44.0, 48.0];
+const HEIGHTS: [f32; 3] = [66.0, 72.0, 78.0];
 /// Variação máxima do chão sob a plataforma (só em trechos quase planos).
-const MAX_GROUND_VARIATION: f32 = 8.0;
+const MAX_GROUND_VARIATION: f32 = 12.0;
 /// Onde as plataformas começam e param (longe do início e do fim do nível).
-const MARGIN: u16 = 600;
+const MARGIN: u16 = 1000;
 
 /// Plataforma de mão única (só colide de cima para baixo).
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -44,21 +44,21 @@ pub fn generate(rng: &mut Rng, terrain: &Terrain, length: u16) -> Vec<Platform> 
     let mut platforms = Vec::new();
     let mut left = MARGIN;
     while left < length.saturating_sub(MARGIN) {
-        let width = 16 * u16::from(rng.u8(3..=6));
+        let width = 16 * u16::from(rng.u8(5..=10));
         let (x, w) = (f32::from(left), f32::from(width));
         let (highest, lowest) = terrain.y_range(x, x + w);
         if lowest - highest <= MAX_GROUND_VARIATION {
             let height = HEIGHTS
                 .get(rng.usize(..HEIGHTS.len()))
                 .copied()
-                .unwrap_or(40.0);
+                .unwrap_or(66.0);
             platforms.push(Platform {
                 x,
                 y: highest - height,
                 w,
             });
         }
-        left = left.saturating_add(width + 16 * u16::from(rng.u8(20..=52)));
+        left = left.saturating_add(width + 16 * u16::from(rng.u8(32..=86)));
     }
     platforms
 }
@@ -70,8 +70,8 @@ mod tests {
 
     fn sample() -> (Terrain, Vec<Platform>) {
         let mut rng = Rng::with_seed(3);
-        let terrain = Terrain::generate(&mut rng, 32_768);
-        let platforms = generate(&mut rng, &terrain, 32_768);
+        let terrain = Terrain::generate(&mut rng, 54_400);
+        let platforms = generate(&mut rng, &terrain, 54_400);
         (terrain, platforms)
     }
 

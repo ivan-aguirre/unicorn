@@ -124,6 +124,13 @@ impl Pixmap {
         }
     }
 
+    /// Pinta o pixel que contém o ponto `(x, y)` (fora da imagem é ignorado).
+    pub fn plot(&mut self, x: f32, y: f32, color: Rgba) {
+        if let (Some(px), Some(py)) = (floor_px(x, self.width), floor_px(y, self.height)) {
+            self.set(px, py, color);
+        }
+    }
+
     /// Se o pixel é visível (fora da imagem conta como transparente).
     #[must_use]
     pub fn is_opaque(&self, x: u16, y: u16) -> bool {
@@ -198,6 +205,14 @@ impl Pixmap {
         (x < self.width && y < self.height)
             .then(|| (usize::from(y) * usize::from(self.width) + usize::from(x)) * 4)
     }
+}
+
+/// Coordenada inteira do pixel que contém `v`, sem conversão com perda (`as`).
+fn floor_px(v: f32, limit: u16) -> Option<u16> {
+    (0..limit)
+        .rev()
+        .find(|i| f32::from(*i) <= v)
+        .filter(|i| v < f32::from(*i) + 1.0)
 }
 
 fn lookup(palette: &Palette, symbol: u8) -> Result<Rgba, ArtError> {
@@ -279,6 +294,16 @@ mod tests {
         assert_eq!(s.get(1, 1), Some([1, 1, 1, 255]));
         assert_eq!(s.get(1, 0), Some(CLEAR), "o vão continua aberto");
         assert_eq!(s.get(3, 2), Some([1, 1, 1, 255]));
+    }
+
+    #[test]
+    fn plota_ponto_no_pixel_que_o_contem() {
+        let mut p = Pixmap::new(4, 4);
+        p.plot(2.7, 1.2, [9, 9, 9, 255]);
+        assert!(p.is_opaque(2, 1));
+        p.plot(-0.5, 1.0, [9, 9, 9, 255]);
+        p.plot(4.0, 1.0, [9, 9, 9, 255]);
+        assert_eq!(p.coords().filter(|(x, y)| p.is_opaque(*x, *y)).count(), 1);
     }
 
     #[test]

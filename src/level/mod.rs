@@ -10,8 +10,8 @@ pub use platform::Platform;
 pub use scenery::Scenery;
 pub use terrain::Terrain;
 
-/// Comprimento do nível, em pixels: cerca de 85 telas, alguns minutos de caminhada.
-pub const LENGTH: u16 = 32_768;
+/// Comprimento do nível, em pixels: 85 telas, alguns minutos de caminhada.
+pub const LENGTH: u16 = 54_400;
 /// Semente do nível: o cenário é sempre o mesmo, só os corações variam.
 pub const SEED: u64 = 0x00C0_FFEE_0D1A_2025;
 

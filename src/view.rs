@@ -4,13 +4,13 @@
 //! o que deixa o cenário estável e fácil de acompanhar para crianças pequenas.
 
 /// Largura da tela virtual, em pixels.
-pub const VIEW_W_PX: u16 = 384;
+pub const VIEW_W_PX: u16 = 640;
 /// Altura da tela virtual, em pixels.
-pub const VIEW_H_PX: u16 = 216;
+pub const VIEW_H_PX: u16 = 360;
 /// Largura da tela virtual, em unidades do mundo.
-pub const VIEW_W: f32 = 384.0;
+pub const VIEW_W: f32 = 640.0;
 /// Altura da tela virtual, em unidades do mundo.
-pub const VIEW_H: f32 = 216.0;
+pub const VIEW_H: f32 = 360.0;
 
 #[cfg(test)]
 mod tests {

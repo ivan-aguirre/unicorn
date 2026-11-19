@@ -10,17 +10,17 @@ use crate::art::{self, Art};
 use crate::audio::Sfx;
 use crate::clock::{FixedStep, STEP};
 use crate::game::{Events, Game};
-use crate::input::{Button, Input, InputLatch};
+use crate::input::{Button, Input, InputLatch, QuitHold};
 use crate::level::{Level, SEED};
 use crate::render::Renderer;
 
-/// Configuração da janela: 3x a tela virtual, redimensionável.
+/// Configuração da janela: 2x a tela virtual, redimensionável.
 #[must_use]
 pub fn window_conf() -> Conf {
     Conf {
         window_title: String::from("Unicórnio"),
-        window_width: 1152,
-        window_height: 648,
+        window_width: 1280,
+        window_height: 720,
         window_resizable: true,
         icon: Art::build().ok().and_then(|a| window_icon(&a)),
         ..Default::default()
@@ -36,7 +36,7 @@ fn window_icon(art: &Art) -> Option<Icon> {
     })
 }
 
-/// Lê o teclado: setas andam, espaço pula, Enter pausa.
+/// Lê o teclado: setas andam, espaço pula, Enter pausa (Esc é tratado à parte: sair).
 fn read_input() -> Input {
     Input {
         left: is_key_down(KeyCode::Left),
@@ -52,7 +52,7 @@ fn read_input() -> Input {
     }
 }
 
-/// Roda o jogo até a janela ser fechada.
+/// Roda o jogo até a janela ser fechada ou Esc ser segurado.
 pub async fn run() {
     let Ok(art) = Art::build() else {
         return;
@@ -63,7 +63,11 @@ pub async fn run() {
     let mut clock = FixedStep::default();
     let mut latch = InputLatch::default();
     let mut fullscreen = false;
+    let mut quit = QuitHold::default();
     loop {
+        if quit.update(is_key_down(KeyCode::Escape), get_frame_time()) {
+            break;
+        }
         if is_key_pressed(KeyCode::F11) {
             fullscreen = !fullscreen;
             set_fullscreen(fullscreen);
@@ -72,7 +76,7 @@ pub async fn run() {
         if let Some(sfx) = &sfx {
             sfx.play(events);
         }
-        renderer.draw(&game);
+        renderer.draw(&game, quit.progress());
         next_frame().await;
     }
 }

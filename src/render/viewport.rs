@@ -54,17 +54,17 @@ mod tests {
 
     #[test]
     fn janela_media_usa_escala_inteira_centralizada() {
-        let v = fit(1280.0, 720.0);
-        assert!((v.w / VIEW_W - 3.0).abs() < f32::EPSILON);
-        assert!((v.x - 64.0).abs() < f32::EPSILON);
-        assert!((v.y - 36.0).abs() < f32::EPSILON);
+        let v = fit(1400.0, 800.0);
+        assert!((v.w / VIEW_W - 2.0).abs() < f32::EPSILON);
+        assert!((v.x - 60.0).abs() < f32::EPSILON);
+        assert!((v.y - 40.0).abs() < f32::EPSILON);
     }
 
     #[test]
     fn janela_pequena_usa_escala_fracionaria() {
-        let v = fit(500.0, 400.0);
-        assert!(v.w <= 500.0 && v.h <= 400.0);
-        assert!(v.w > 450.0, "deve aproveitar a janela");
+        let v = fit(900.0, 600.0);
+        assert!(v.w <= 900.0 && v.h <= 600.0);
+        assert!(v.w > 850.0, "deve aproveitar a janela");
     }
 
     #[test]

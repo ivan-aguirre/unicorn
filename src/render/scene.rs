@@ -10,6 +10,7 @@ use macroquad::texture::{DrawTextureParams, Texture2D, draw_texture, draw_textur
 use super::textures::Textures;
 use crate::art::flower_index;
 use crate::art::procedural::{GRASS_TIP, GROUND_TILE};
+use crate::art::unicorn::FEET;
 use crate::effects::ParticleKind;
 use crate::game::Game;
 use crate::level::platform::THICKNESS;
@@ -22,19 +23,17 @@ use crate::player::Facing;
 use crate::view::{VIEW_H, VIEW_H_PX, VIEW_W, VIEW_W_PX};
 
 /// Linha do horizonte (onde começa o mar).
-const SEA_Y: f32 = 124.0;
+const SEA_Y: f32 = 206.0;
 /// Base das colinas do fundo (dentro do lago).
-const MESA_BASE: f32 = 150.0;
+const MESA_BASE: f32 = 250.0;
 /// Faixas do céu: (topo, base, cor).
 const SKY: [(f32, f32, u32); 5] = [
-    (0.0, 24.0, 0x3a_78_d8),
-    (24.0, 50.0, 0x4a_8a_e8),
-    (50.0, 76.0, 0x62_a2_f2),
-    (76.0, 100.0, 0x82_bb_f7),
-    (100.0, 124.0, 0xa8_d4_fb),
+    (0.0, 40.0, 0x3a_78_d8),
+    (40.0, 84.0, 0x4a_8a_e8),
+    (84.0, 126.0, 0x62_a2_f2),
+    (126.0, 166.0, 0x82_bb_f7),
+    (166.0, 206.0, 0xa8_d4_fb),
 ];
-/// Ponto do sprite do unicórnio que fica sobre a posição dos pés.
-const UNICORN_FEET: Vec2 = Vec2::new(12.0, 31.0);
 
 /// Converte `0xRRGGBB` numa cor opaca.
 #[must_use]
@@ -97,7 +96,7 @@ fn draw_sky(tex: &Textures, view: View) {
     }
     let frame = usize::from((view.time * 2.0).rem_euclid(2.0) >= 1.0);
     if let Some(sun) = tex.sun.get(frame) {
-        draw_texture(sun, VIEW_W - 64.0, 6.0, WHITE);
+        draw_texture(sun, VIEW_W - 104.0, 10.0, WHITE);
     }
 }
 
@@ -110,7 +109,7 @@ fn draw_clouds(tex: &Textures, game: &Game, view: View, layer: usize) {
     };
     for c in clouds {
         let moved = view.cam.mul_add(layer.parallax, view.time * layer.drift);
-        let x = (c.x - moved).rem_euclid(CLOUD_PERIOD) - 72.0;
+        let x = (c.x - moved).rem_euclid(CLOUD_PERIOD) - 120.0;
         if let Some(t) = tex.clouds.get(c.kind).filter(|_| x < VIEW_W) {
             draw_texture(t, x.round(), c.y, WHITE);
         }
@@ -123,34 +122,34 @@ fn draw_far(view: View) {
     let (body, top) = (color(0x8c_c9_b4), color(0xb8_e4_d0));
     for x in columns(2) {
         let lx = x + offset;
-        let peaks = 6.0f32.mul_add(
-            lx.mul_add(0.057, 1.3).sin(),
-            9.0f32.mul_add((lx * 0.021).sin(), 104.0),
+        let peaks = 10.0f32.mul_add(
+            lx.mul_add(0.034, 1.3).sin(),
+            15.0f32.mul_add((lx * 0.0126).sin(), 173.0),
         );
         let peak = peaks.round();
         draw_rectangle(x, peak, 2.0, SEA_Y - peak, body);
-        draw_rectangle(x, peak, 2.0, 2.0, top);
+        draw_rectangle(x, peak, 2.0, 3.0, top);
     }
     draw_rectangle(0.0, SEA_Y, VIEW_W, VIEW_H - SEA_Y, color(0x3f_86_e0));
-    draw_rectangle(0.0, SEA_Y, VIEW_W, 2.0, color(0x9f_d4_ff));
+    draw_rectangle(0.0, SEA_Y, VIEW_W, 3.0, color(0x9f_d4_ff));
     draw_sea_shimmer(view, offset);
 }
 
 fn draw_sea_shimmer(view: View, offset: f32) {
     let light = color(0xc4_e6_ff);
     for (row, y) in [
-        (0.0f32, 129.0f32),
-        (1.0, 135.0),
-        (2.0, 143.0),
-        (3.0, 153.0),
-        (4.0, 166.0),
+        (0.0f32, 215.0f32),
+        (1.0, 225.0),
+        (2.0, 238.0),
+        (3.0, 255.0),
+        (4.0, 277.0),
     ] {
-        let wobble = view.time.mul_add(1.5, row).sin() * 3.0;
+        let wobble = view.time.mul_add(1.5, row).sin() * 5.0;
         let speed = 0.2f32.mul_add(row, 1.0);
-        let start = offset.mul_add(-speed, wobble).rem_euclid(48.0) - 48.0;
-        for x in columns(48) {
-            let sx = row.mul_add(9.0, start + x);
-            draw_rectangle(sx.round(), y, 10.0 - row, 1.0, light);
+        let start = offset.mul_add(-speed, wobble).rem_euclid(80.0) - 80.0;
+        for x in columns(80) {
+            let sx = row.mul_add(15.0, start + x);
+            draw_rectangle(sx.round(), y, 2.0f32.mul_add(-row, 16.0), 2.0, light);
         }
     }
 }
@@ -165,10 +164,10 @@ fn draw_rainbows(tex: &Textures, game: &Game, view: View) {
         left + VIEW_W,
     ) {
         let sx = x - left;
-        draw_texture(&tex.rainbow, sx, SEA_Y - tex.rainbow.height() + 2.0, WHITE);
+        draw_texture(&tex.rainbow, sx, SEA_Y - tex.rainbow.height() + 3.0, WHITE);
         if let Some(puff) = tex.clouds.get(1) {
-            draw_texture(puff, sx - 12.0, SEA_Y - 14.0, WHITE);
-            draw_texture(puff, sx + width - 22.0, SEA_Y - 14.0, WHITE);
+            draw_texture(puff, sx - 20.0, SEA_Y - 23.0, WHITE);
+            draw_texture(puff, sx + width - 37.0, SEA_Y - 23.0, WHITE);
         }
     }
 }
@@ -178,7 +177,7 @@ fn draw_mesas(game: &Game, view: View) {
     for m in span(
         &game.level.scenery.mesas,
         |m| m.x,
-        left - 130.0,
+        left - 210.0,
         left + VIEW_W,
     ) {
         let sx = m.x - left;
@@ -192,24 +191,24 @@ fn draw_mesas(game: &Game, view: View) {
 /// Colina de topo gramado com cantos arredondados, luz à esquerda e sombra à direita.
 fn draw_mesa(m: &Mesa, sx: f32) {
     let (top, height) = (m.top, MESA_BASE - m.top);
-    draw_rectangle(sx, top + 2.0, m.w, height - 2.0, color(0x4f_9c_78));
+    draw_rectangle(sx, top + 3.0, m.w, height - 3.0, color(0x4f_9c_78));
     let stripe = color(0x43_88_68);
-    for dx in columns(8).take_while(|dx| *dx < m.w - 8.0) {
-        draw_rectangle(sx + dx + 5.0, top + 7.0, 2.0, height - 7.0, stripe);
+    for dx in columns(12).take_while(|dx| *dx < m.w - 13.0) {
+        draw_rectangle(sx + dx + 8.0, top + 12.0, 3.0, height - 12.0, stripe);
     }
-    draw_rectangle(sx, top + 6.0, 2.0, height - 6.0, color(0x68_b8_8e));
+    draw_rectangle(sx, top + 10.0, 3.0, height - 10.0, color(0x68_b8_8e));
     draw_rectangle(
-        sx + m.w - 2.0,
-        top + 6.0,
-        2.0,
-        height - 6.0,
+        sx + m.w - 3.0,
+        top + 10.0,
+        3.0,
+        height - 10.0,
         color(0x3a_78_5c),
     );
     let grass = color(0x7a_d8_7c);
-    draw_rectangle(sx + 2.0, top, m.w - 4.0, 1.0, grass);
-    draw_rectangle(sx + 1.0, top + 1.0, m.w - 2.0, 1.0, grass);
-    draw_rectangle(sx, top + 2.0, m.w, 3.0, grass);
-    draw_rectangle(sx, top + 5.0, m.w, 2.0, color(0x2f_7a_52));
+    draw_rectangle(sx + 3.0, top, m.w - 6.0, 1.0, grass);
+    draw_rectangle(sx + 1.0, top + 1.0, m.w - 2.0, 2.0, grass);
+    draw_rectangle(sx, top + 3.0, m.w, 5.0, grass);
+    draw_rectangle(sx, top + 8.0, m.w, 3.0, color(0x2f_7a_52));
 }
 
 /// Cachoeira com faixas de espuma descendo e respingos na base.
@@ -217,20 +216,20 @@ fn draw_waterfall(left: f32, width: f32, top: f32, time: f32) {
     let height = MESA_BASE - top;
     let edge = color(0x5f_b8_f0);
     draw_rectangle(left, top, width, height, color(0x8f_d6_ff));
-    draw_rectangle(left, top, 1.0, height, edge);
-    draw_rectangle(left + width - 1.0, top, 1.0, height, edge);
+    draw_rectangle(left, top, 2.0, height, edge);
+    draw_rectangle(left + width - 2.0, top, 2.0, height, edge);
     let foam = color(0xff_ff_ff);
-    for offset in offsets(9, height) {
-        let streak = top + time.mul_add(48.0, offset).rem_euclid(height);
-        draw_rectangle(left + 2.0, streak.round(), width - 4.0, 2.0, foam);
+    for offset in offsets(14, height) {
+        let streak = top + time.mul_add(80.0, offset).rem_euclid(height);
+        draw_rectangle(left + 3.0, streak.round(), width - 6.0, 3.0, foam);
     }
-    draw_rectangle(left - 1.0, top - 1.0, width + 2.0, 2.0, foam);
+    draw_rectangle(left - 2.0, top - 2.0, width + 4.0, 3.0, foam);
     let splash = if (time * 6.0).rem_euclid(2.0) < 1.0 {
         0.0
     } else {
         2.0
     };
-    draw_rectangle(left - 3.0 + splash, MESA_BASE - 3.0, width + 4.0, 4.0, foam);
+    draw_rectangle(left - 5.0 + splash, MESA_BASE - 5.0, width + 7.0, 6.0, foam);
 }
 
 /// Enfeites do chão: árvores atrás do chão (`behind`) ou arbustos e flores na frente.
@@ -238,26 +237,28 @@ fn draw_props(tex: &Textures, level: &Level, view: View, behind: bool) {
     for p in span(
         &level.scenery.props,
         |p| p.x,
-        view.cam - 40.0,
-        view.cam + VIEW_W + 40.0,
+        view.cam - 60.0,
+        view.cam + VIEW_W + 60.0,
     ) {
         let ground = level.terrain.height_at(p.x).round();
         let x = p.x - view.cam;
         let sprite = match p.kind {
-            PropKind::Tree if behind => Some((&tex.tree, 17.0, 46.0)),
-            PropKind::BlossomTree if behind => Some((&tex.blossom, 17.0, 46.0)),
-            PropKind::Bush if !behind => Some((&tex.bush, 13.0, 11.0)),
-            PropKind::Flower(c) if !behind => Some((flower(tex, c, p.x, view.time), 3.0, 9.0)),
+            PropKind::Tree if behind => Some((&tex.tree, 6.0)),
+            PropKind::BlossomTree if behind => Some((&tex.blossom, 6.0)),
+            PropKind::Bush if !behind => Some((&tex.bush, 4.0)),
+            PropKind::Flower(c) if !behind => Some((flower(tex, c, p.x, view.time), 3.0)),
             _ => None,
         };
-        if let Some((t, ax, ay)) = sprite {
-            draw_texture(t, x - ax, ground - ay, WHITE);
+        // Plantado: centralizado em `x`, afundando `sink` pixels no chão.
+        if let Some((t, sink)) = sprite {
+            let at = Vec2::new(x - (t.width() / 2.0).floor(), ground - t.height() + sink);
+            draw_texture(t, at.x, at.y, WHITE);
         }
     }
 }
 
 fn flower(tex: &Textures, c: FlowerColor, x: f32, time: f32) -> &Texture2D {
-    let frame = usize::from(x.mul_add(0.05, time * 2.0).sin() > 0.0);
+    let frame = usize::from(x.mul_add(0.03, time * 2.0).sin() > 0.0);
     let pair = tex.flowers.get(flower_index(c)).unwrap_or(&tex.flowers[0]);
     pair.get(frame).unwrap_or(&pair[0])
 }
@@ -270,8 +271,8 @@ fn draw_ground(tex: &Textures, level: &Level, view: View) {
         column(
             &tex.soil,
             x,
-            gy + 4.0,
-            Rect::new(tile_x(wx), gy + 4.0, 1.0, VIEW_H - gy - 4.0),
+            gy + 6.0,
+            Rect::new(tile_x(wx), gy + 6.0, 1.0, VIEW_H - gy - 6.0),
         );
     }
     let grass_h = tex.grass.height();
@@ -294,20 +295,20 @@ fn draw_platforms(tex: &Textures, level: &Level, view: View) {
     for p in span(
         &level.platforms,
         |p| p.x,
-        view.cam - 100.0,
+        view.cam - 170.0,
         view.cam + VIEW_W,
     ) {
         for c in columns(1).take_while(|c| *c < p.w) {
             let (wx, sx) = (p.x + c, p.x + c - view.cam);
             let edge = c.min(p.w - 1.0 - c);
-            let depth = (4.0 - edge).max(0.0).mul_add(-2.0, THICKNESS + 4.0);
+            let depth = (6.0 - edge).max(0.0).mul_add(-2.0, THICKNESS + 6.0);
             column(
                 &tex.soil,
                 sx,
-                p.y + 4.0,
-                Rect::new(tile_x(wx), p.y + 4.0, 1.0, depth - 4.0),
+                p.y + 6.0,
+                Rect::new(tile_x(wx), p.y + 6.0, 1.0, depth - 6.0),
             );
-            draw_rectangle(sx, p.y + depth, 1.0, 1.0, underside);
+            draw_rectangle(sx, p.y + depth, 1.0, 2.0, underside);
             column(
                 &tex.grass,
                 sx,
@@ -339,7 +340,7 @@ fn column(t: &Texture2D, x: f32, y: f32, source: Rect) {
 fn draw_hearts(tex: &Textures, game: &Game, view: View) {
     let (w, h) = (tex.heart.width(), tex.heart.height());
     for heart in game.hearts.in_span(view.cam - w, view.cam + VIEW_W + w) {
-        let bob = (view.time.mul_add(3.0, heart.phase)).sin() * 2.0;
+        let bob = (view.time.mul_add(3.0, heart.phase)).sin() * 3.0;
         let center = Vec2::new(heart.pos.x - view.cam, heart.pos.y + bob.round());
         let grow = (heart.age / 0.35).min(1.0);
         if grow < 1.0 {
@@ -364,8 +365,8 @@ fn draw_player(tex: &Textures, game: &Game, view: View) {
     let Some(frame) = tex.unicorn.get(player.pose().index()) else {
         return;
     };
-    let x = (player.pos.x - view.cam - UNICORN_FEET.x).round();
-    let y = (player.pos.y - UNICORN_FEET.y).round();
+    let x = (player.pos.x - view.cam - FEET.0).round();
+    let y = (player.pos.y - FEET.1).round();
     draw_texture_ex(
         frame,
         x,

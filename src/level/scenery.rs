@@ -32,7 +32,7 @@ pub const RAINBOW_PARALLAX: Parallax = Parallax(20);
 /// Paralaxe das colinas com cachoeiras.
 pub const MESA_PARALLAX: Parallax = Parallax(40);
 /// Período (em pixels de tela) em que cada camada de nuvens se repete.
-pub const CLOUD_PERIOD: f32 = 1152.0;
+pub const CLOUD_PERIOD: f32 = 1920.0;
 
 /// Camada de nuvens que se repete pelo céu.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -49,20 +49,20 @@ pub const CLOUD_LAYERS: [CloudLayer; 2] = [
     CloudLayer {
         parallax: 0.06,
         drift: 3.0,
-        top: 8.0,
-        bottom: 40.0,
+        top: 14.0,
+        bottom: 66.0,
     },
     CloudLayer {
         parallax: 0.25,
         drift: 7.0,
-        top: 24.0,
-        bottom: 72.0,
+        top: 40.0,
+        bottom: 120.0,
     },
 ];
 /// Nuvens por camada.
 const CLOUDS_PER_LAYER: u8 = 7;
 /// Distância mínima entre duas árvores.
-const TREE_SPACING: u16 = 112;
+const TREE_SPACING: u16 = 186;
 
 /// Cor das flores.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -142,9 +142,9 @@ pub fn range(rng: &mut Rng, lo: f32, hi: f32) -> f32 {
 
 fn props(rng: &mut Rng, length: u16) -> Vec<Prop> {
     let mut out = Vec::new();
-    let mut x: u16 = 40;
+    let mut x: u16 = 66;
     let mut next_tree: u16 = 0;
-    while x < length.saturating_sub(40) {
+    while x < length.saturating_sub(66) {
         let kind = prop_kind(rng, x >= next_tree);
         if matches!(kind, PropKind::Tree | PropKind::BlossomTree) {
             next_tree = x.saturating_add(TREE_SPACING);
@@ -153,7 +153,7 @@ fn props(rng: &mut Rng, length: u16) -> Vec<Prop> {
             x: f32::from(x),
             kind,
         });
-        x = x.saturating_add(rng.u16(14..48));
+        x = x.saturating_add(rng.u16(24..80));
     }
     out
 }
@@ -178,30 +178,30 @@ const fn flower_color(roll: u8) -> FlowerColor {
 
 fn mesas(rng: &mut Rng, extent: u16) -> Vec<Mesa> {
     let mut out = Vec::new();
-    let mut x = rng.u16(0..24);
+    let mut x = rng.u16(0..40);
     while x < extent {
-        let width = rng.u16(48..120);
+        let width = rng.u16(80..200);
         let waterfall = (rng.u8(..100) < 45).then(|| Waterfall {
-            offset: f32::from(rng.u16(8..width - 20)),
-            w: f32::from(rng.u16(8..13)),
+            offset: f32::from(rng.u16(14..width - 34)),
+            w: f32::from(rng.u16(13..22)),
         });
         out.push(Mesa {
             x: f32::from(x),
             w: f32::from(width),
-            top: f32::from(rng.u16(62..100)),
+            top: f32::from(rng.u16(104..166)),
             waterfall,
         });
-        x = x.saturating_add(width + rng.u16(20..120));
+        x = x.saturating_add(width + rng.u16(34..200));
     }
     out
 }
 
 fn rainbows(rng: &mut Rng, extent: u16) -> Vec<f32> {
     let mut out = Vec::new();
-    let mut x = rng.u16(140..260);
+    let mut x = rng.u16(230..430);
     while x < extent {
         out.push(f32::from(x));
-        x = x.saturating_add(rng.u16(420..760));
+        x = x.saturating_add(rng.u16(700..1270));
     }
     out
 }
@@ -224,7 +224,7 @@ fn clouds(rng: &mut Rng, layer: &CloudLayer) -> Vec<Cloud> {
 mod tests {
     use super::*;
 
-    const LENGTH: u16 = 32_768;
+    const LENGTH: u16 = 54_400;
 
     fn sample() -> Scenery {
         Scenery::generate(&mut Rng::with_seed(11), LENGTH)
@@ -252,11 +252,11 @@ mod tests {
     fn camadas_cobrem_o_nivel_inteiro() {
         let s = sample();
         let last_mesa = s.mesas.last().map_or(0.0, |m| m.x + m.w);
-        assert!(last_mesa >= f32::from(MESA_PARALLAX.extent(LENGTH)) - 160.0);
+        assert!(last_mesa >= f32::from(MESA_PARALLAX.extent(LENGTH)) - 260.0);
         let last_rainbow = s.rainbows.last().copied().unwrap_or(0.0);
-        assert!(last_rainbow >= f32::from(RAINBOW_PARALLAX.extent(LENGTH)) - 800.0);
+        assert!(last_rainbow >= f32::from(RAINBOW_PARALLAX.extent(LENGTH)) - 1300.0);
         let last_prop = s.props.last().map_or(0.0, |p| p.x);
-        assert!(last_prop >= f32::from(LENGTH) - 100.0);
+        assert!(last_prop >= f32::from(LENGTH) - 160.0);
     }
 
     #[test]

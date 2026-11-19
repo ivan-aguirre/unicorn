@@ -11,7 +11,7 @@ use crate::player::Player;
 use crate::view::VIEW_W;
 
 /// Onde o unicórnio aparece.
-const SPAWN_X: f32 = 96.0;
+const SPAWN_X: f32 = 160.0;
 
 /// Jogando ou pausado.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

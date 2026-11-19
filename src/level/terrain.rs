@@ -4,15 +4,15 @@ use fastrand::Rng;
 use macroquad::math::Vec2;
 
 /// Ponto mais alto que o chão pode alcançar (menor `y`).
-pub const GROUND_TOP: f32 = 132.0;
+pub const GROUND_TOP: f32 = 220.0;
 /// Ponto mais baixo que o chão pode alcançar (maior `y`).
-pub const GROUND_BOTTOM: f32 = 184.0;
+pub const GROUND_BOTTOM: f32 = 306.0;
 /// Altura do chão no começo e no fim do nível.
-const BASE_Y: f32 = 168.0;
+const BASE_Y: f32 = 280.0;
 /// Trecho plano no início, onde o unicórnio aparece.
-const FLAT_START: u16 = 448;
+const FLAT_START: u16 = 752;
 /// Trecho plano no fim do nível.
-const FLAT_END: u16 = 384;
+const FLAT_END: u16 = 640;
 /// Inclinações possíveis (dy/dx; negativo sobe para a direita). Plano é o mais comum.
 const SLOPES: [f32; 7] = [-0.5, -0.25, 0.0, 0.0, 0.0, 0.25, 0.5];
 /// Inclinação máxima, em módulo: suave o bastante para andar sem esforço.
@@ -46,7 +46,7 @@ impl Terrain {
         let (mut x, mut y, mut slope) = (FLAT_START, BASE_Y, 0.0);
         let end = length.saturating_sub(FLAT_END);
         while x < end {
-            let run = (16 * u16::from(rng.u8(2..=8))).min(end - x);
+            let run = (16 * u16::from(rng.u8(3..=13))).min(end - x);
             slope = next_slope(rng, slope, y, f32::from(run));
             x += run;
             y = slope
@@ -122,7 +122,7 @@ fn next_slope(rng: &mut Rng, previous: f32, y: f32, seg: f32) -> f32 {
 mod tests {
     use super::*;
 
-    const LENGTH: u16 = 32_768;
+    const LENGTH: u16 = 54_400;
 
     fn sample() -> Terrain {
         Terrain::generate(&mut Rng::with_seed(7), LENGTH)
