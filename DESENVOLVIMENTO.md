@@ -38,8 +38,8 @@ cargo run --example snapshot -- target/snapshots   # capturas de cenas e folha d
 
 ## Qualidade
 
-- **Linter agressivo** (igual ao projeto Fono): clippy `pedantic` + `nursery` + `cargo` como
-  erro, complexidade cognitiva ≤ 15, funções ≤ 50 linhas, ≤ 5 argumentos, aninhamento ≤ 4,
+- **Linter agressivo** (base do projeto Fono, mais rígido): clippy `pedantic` + `nursery` + `cargo` como
+  erro, complexidade cognitiva ≤ 10 (SonarQube usa 15; clippy, 25), funções ≤ 50 linhas, ≤ 5 argumentos, aninhamento ≤ 4,
   proibição de `unwrap`/`expect`/`panic`/indexação direta e `unsafe` fora de testes. Nenhum
   `#[allow]` no código.
 - **Testes**: unitários para toda a lógica e a arte (física, terreno, plataformas, cenário,

@@ -1,8 +1,15 @@
 # Unicórnio
 
-Jogo de plataforma para crianças bem pequenas. Um pônei-unicórnio fofo passeia por um nível
-longo de grama, cachoeiras, sol, nuvens e arco-íris, coletando corações. Não há como perder:
-é só explorar e juntar corações — a cada 100, tem festa e a contagem recomeça do zero.
+Jogo de plataforma para crianças pequenas. Não há como perder:
+é só ajudar o unicórinio a juntar corações — a cada 100, tem festa e a contagem recomeça do zero.
+
+## Disclaimer
+
+- Este código foi todo gerado por IA.
+- Fique a vontade para fazer fork, alterar e distribuir.
+- Se for distribuir, por favor mencione este repo como sendo o original.
+- Este jogo foi construído e testado no Linux Omarchy 4.5.0-3.
+- Este jogo não foi testado em Windows.
 
 ![Unicórnio](docs/screenshot.png)
 
