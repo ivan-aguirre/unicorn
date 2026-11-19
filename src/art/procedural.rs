@@ -204,23 +204,123 @@ const CLOUDS: [CloudShape; 3] = [
     ),
 ];
 
+/// Corpo de nuvem: os discos de cima e uma fileira de "bolinhas" embaixo, para a base ficar
+/// redonda e ondulada (nunca reta); a parte de baixo ganha um tom de sombra.
+fn fluffy(p: &mut Pixmap, puffs: &[Puff]) {
+    let white = rgb(0xff_ff_ff);
+    for &(center, r) in puffs {
+        disc(p, center, r, white);
+    }
+    let h = f32::from(p.height());
+    let r = (h * 0.24).max(4.0);
+    let first = puffs.first().map_or(r, |((x, _), _)| *x);
+    let last = puffs.last().map_or(r, |((x, _), _)| *x);
+    let base = h - r - 2.0;
+    let steps = (0..40_u8)
+        .map(f32::from)
+        .take_while(|k| k.mul_add(r * 1.25, first) <= last);
+    for k in steps {
+        disc(p, (k.mul_add(r * 1.25, first), base), r, white);
+    }
+    disc(p, (last, base), r, white);
+    let shadow = rgb(0xdc_ee_ff);
+    for (x, y) in p.coords() {
+        if f32::from(y) > h * 0.68 && p.is_opaque(x, y) {
+            p.set(x, y, shadow);
+        }
+    }
+}
+
 /// Nuvem fofa de um dos três formatos.
 #[must_use]
 pub fn cloud(kind: usize) -> Pixmap {
     let ((w, h), puffs) = CLOUDS.get(kind).copied().unwrap_or(CLOUDS[0]);
     let mut p = Pixmap::new(w, h);
-    let white = rgb(0xff_ff_ff);
-    for &(center, r) in puffs {
-        disc(&mut p, center, r, white);
-    }
-    fill(&mut p, (8, h - 13), (w - 8, h - 3), white);
-    let shadow = rgb(0xdc_ee_ff);
-    for (x, y) in p.coords() {
-        if y + 8 >= h && p.is_opaque(x, y) {
-            p.set(x, y, shadow);
-        }
-    }
+    fluffy(&mut p, puffs);
     p.outlined(rgb(0xb8_dc_ff))
+}
+
+/// Carinha das nuvens da festa.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CloudFace {
+    /// Olhinhos fechados de alegria (^^) e sorriso.
+    Happy,
+    /// Olhos abertos brilhando e boca aberta de festa.
+    Cheering,
+}
+
+const CLOUD_INK: u32 = 0x5a_4a_7a;
+const CLOUD_BLUSH: u32 = 0xff_a3_c8;
+
+/// Nuvem sorridente que apoia a base do arco-íris na festa dos 100 corações.
+#[must_use]
+pub fn smiley_cloud(face: CloudFace) -> Pixmap {
+    let mut p = Pixmap::new(120, 56);
+    let puffs = [
+        ((24.0, 32.0), 16.0),
+        ((48.0, 23.0), 21.0),
+        ((74.0, 21.0), 20.0),
+        ((96.0, 31.0), 15.0),
+    ];
+    fluffy(&mut p, &puffs);
+    // O rosto fica sobre branco, mesmo onde a sombra de baixo alcançaria.
+    disc(&mut p, (60.0, 34.0), 13.0, rgb(0xff_ff_ff));
+    for (x, y) in [
+        (42, 37),
+        (43, 37),
+        (44, 37),
+        (76, 37),
+        (77, 37),
+        (78, 37),
+        (42, 38),
+        (43, 38),
+        (77, 38),
+        (78, 38),
+    ] {
+        p.set(x, y, rgb(CLOUD_BLUSH));
+    }
+    match face {
+        CloudFace::Happy => happy_face(&mut p),
+        CloudFace::Cheering => cheering_face(&mut p),
+    }
+    p.outlined(rgb(0x8f_bf_e8))
+}
+
+/// Olhos "^" e sorriso fechado.
+fn happy_face(p: &mut Pixmap) {
+    let ink = rgb(CLOUD_INK);
+    for (dx, dy) in [(0, 2), (1, 1), (2, 0), (3, 0), (4, 1), (5, 2)] {
+        p.set(46 + dx, 29 + dy, ink);
+        p.set(69 + dx, 29 + dy, ink);
+    }
+    let smile = [
+        (53, 38),
+        (54, 39),
+        (55, 40),
+        (56, 40),
+        (57, 41),
+        (58, 41),
+        (59, 41),
+    ];
+    for (x, y) in smile {
+        p.set(x, y, ink);
+        p.set(119 - x, y, ink);
+    }
+}
+
+/// Olhos abertos com brilho e boca aberta.
+fn cheering_face(p: &mut Pixmap) {
+    let ink = rgb(CLOUD_INK);
+    for left in [47_u16, 70] {
+        fill(p, (left, 28), (left + 4, 33), ink);
+        p.set(left + 1, 29, rgb(0xff_ff_ff));
+    }
+    fill(p, (53, 37), (67, 38), ink);
+    for (y, inset) in [(38_u16, 0_u16), (39, 0), (40, 1), (41, 2), (42, 4)] {
+        fill(p, (53 + inset, y), (67 - inset, y + 1), ink);
+    }
+    fill(p, (55, 38), (65, 40), rgb(0xe0_55_9f));
+    fill(p, (57, 40), (63, 42), rgb(0xff_8f_b8));
 }
 
 /// Árvore em duas camadas do mesmo tamanho: tronco e copa (a copa balança com o vento).
@@ -512,6 +612,60 @@ mod tests {
         };
         assert!(top(&frames[0]) < top(&frames[2]));
         assert!(bottom(&frames[2]) > bottom(&frames[0]));
+    }
+
+    /// Maior trecho contínuo da linha de baixo da silhueta: numa base redonda, é curto.
+    fn longest_bottom_run(p: &Pixmap) -> usize {
+        let bottom = p
+            .coords()
+            .filter(|(x, y)| p.is_opaque(*x, *y))
+            .map(|(_, y)| y)
+            .max()
+            .unwrap();
+        (0..p.width())
+            .map(|x| p.is_opaque(x, bottom))
+            .fold((0, 0), |(best, run), on| {
+                if on {
+                    (best.max(run + 1), run + 1)
+                } else {
+                    (best, 0)
+                }
+            })
+            .0
+    }
+
+    #[test]
+    fn nuvens_tem_a_base_redonda() {
+        for cloud in [cloud(0), cloud(1), cloud(2), smiley_cloud(CloudFace::Happy)] {
+            let width = usize::from(cloud.width());
+            assert!(
+                longest_bottom_run(&cloud) * 6 < width,
+                "base reta numa nuvem de {width} px"
+            );
+        }
+    }
+
+    #[test]
+    fn nuvens_da_festa_tem_carinhas_diferentes() {
+        let (happy, cheering) = (
+            smiley_cloud(CloudFace::Happy),
+            smiley_cloud(CloudFace::Cheering),
+        );
+        assert_ne!(happy, cheering);
+        assert_eq!(
+            (happy.width(), happy.height()),
+            (cheering.width(), cheering.height())
+        );
+        let ink = rgb(CLOUD_INK);
+        for cloud in [&happy, &cheering] {
+            assert!(
+                cloud
+                    .coords()
+                    .filter(|(x, y)| cloud.get(*x, *y) == Some(ink))
+                    .count()
+                    > 15
+            );
+        }
     }
 
     #[test]

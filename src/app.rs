@@ -14,6 +14,9 @@ use crate::input::{Button, Input, InputLatch, QuitHold};
 use crate::level::{Level, SEED};
 use crate::render::Renderer;
 
+/// Teclas de teste (F9 começa a festa dos 100 corações): só nos builds de desenvolvimento.
+const TEST_KEYS: bool = cfg!(debug_assertions);
+
 /// Configuração da janela: 2x a tela virtual, redimensionável.
 #[must_use]
 pub fn window_conf() -> Conf {
@@ -72,7 +75,10 @@ pub async fn run() {
             fullscreen = !fullscreen;
             set_fullscreen(fullscreen);
         }
-        let events = simulate(&mut game, &mut clock, &mut latch, read_input());
+        let mut events = simulate(&mut game, &mut clock, &mut latch, read_input());
+        if TEST_KEYS && is_key_pressed(KeyCode::F9) {
+            events = events.merge(game.celebrate_now());
+        }
         if let Some(sfx) = &sfx {
             sfx.play(events);
         }

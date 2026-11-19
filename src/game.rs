@@ -105,14 +105,22 @@ impl Game {
         events
     }
 
+    /// Começa a festa dos 100 corações agora (também usada pela tecla de teste).
+    pub fn celebrate_now(&mut self) -> Events {
+        self.effects.celebrate(self.camera.x, VIEW_W);
+        Events {
+            celebrated: true,
+            ..Events::default()
+        }
+    }
+
     fn collect_hearts(&mut self, events: &mut Events) {
         for pos in self.hearts.collect(self.player.hitbox()) {
             events.hearts += 1;
             self.player.cheer();
             self.effects.sparkle(pos);
             if self.counter.add() {
-                events.celebrated = true;
-                self.effects.celebrate(self.camera.x, VIEW_W);
+                *events = events.merge(self.celebrate_now());
             }
         }
     }
@@ -186,6 +194,16 @@ mod tests {
             paused.merge(Events::default()).mode_changed,
             Some(Mode::Paused)
         );
+    }
+
+    #[test]
+    fn festa_pode_comecar_sem_mexer_no_contador() {
+        let mut g = game();
+        let before = g.counter;
+        let e = g.celebrate_now();
+        assert!(e.celebrated);
+        assert!(g.effects.celebration() > 0.0);
+        assert_eq!(g.counter, before);
     }
 
     #[test]

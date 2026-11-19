@@ -14,6 +14,11 @@ use crate::view::{VIEW_H, VIEW_W};
 
 /// Escala do texto do placar e da pausa (letras grandes para crianças).
 const TEXT_SCALE: f32 = 3.0;
+/// Arco-íris da festa: ampliação e topo na tela.
+const PARTY_RAINBOW_SCALE: f32 = 2.0;
+const PARTY_RAINBOW_TOP: f32 = 40.0;
+/// Distância da borda do arco-íris até o meio de cada base (na imagem original).
+const RAINBOW_FOOT: f32 = 25.5;
 /// Escala do "100" da festa.
 const PARTY_SCALE: f32 = 5.0;
 /// Largura da barra de progresso até 100.
@@ -56,17 +61,29 @@ fn draw_counter(tex: &Textures, counter: HeartCounter) {
 fn draw_celebration(tex: &Textures, remaining: f32) {
     let elapsed = CELEBRATION_TIME - remaining;
     let alpha = (elapsed * 3.0).min(remaining * 1.5).min(1.0);
-    let size = tex.rainbow.size() * 2.0;
-    draw_texture_ex(
-        &tex.rainbow,
-        ((VIEW_W - size.x) / 2.0).round(),
-        40.0,
-        Color::new(1.0, 1.0, 1.0, alpha),
-        DrawTextureParams {
-            dest_size: Some(size),
-            ..Default::default()
-        },
-    );
+    let tint = Color::new(1.0, 1.0, 1.0, alpha);
+    let size = tex.rainbow.size() * PARTY_RAINBOW_SCALE;
+    let left = ((VIEW_W - size.x) / 2.0).round();
+    let params = DrawTextureParams {
+        dest_size: Some(size),
+        ..Default::default()
+    };
+    draw_texture_ex(&tex.rainbow, left, PARTY_RAINBOW_TOP, tint, params);
+    // Uma nuvem sorridente em cada base, balançando em sentidos opostos.
+    let base_y = PARTY_RAINBOW_TOP + size.y - 10.0;
+    let feet = [
+        RAINBOW_FOOT.mul_add(PARTY_RAINBOW_SCALE, left),
+        RAINBOW_FOOT.mul_add(-PARTY_RAINBOW_SCALE, left + size.x),
+    ];
+    for ((cloud, foot), phase) in tex
+        .party_clouds
+        .iter()
+        .zip(feet)
+        .zip([0.0, std::f32::consts::PI])
+    {
+        let bob = (elapsed.mul_add(3.0, phase).sin() * 2.0).round();
+        draw_centered(cloud, Vec2::new(foot, base_y + bob), 1.0, tint);
+    }
     draw_centered_text(tex, "100", 150.0, PARTY_SCALE);
 }
 

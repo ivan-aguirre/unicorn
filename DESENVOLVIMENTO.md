@@ -11,7 +11,8 @@ Detalhes técnicos do jogo Unicórnio. Para jogar e compilar, veja o [README](RE
 - Cada coração pego **reaparece aleatoriamente** em outro lugar, fora da tela e de preferência
   à frente do unicórnio — nunca faltam corações.
 - **A cada 100 corações a contagem volta a zero**, com festa: arco-íris gigante, chuva de
-  corações e estrelas e uma fanfarra. A barra sob o contador mostra o quanto falta.
+  corações e estrelas, uma nuvem sorridente em cada base do arco-íris e uma fanfarra. A barra
+  sob o contador mostra o quanto falta.
 - **Unicórnio expressivo** (`src/animation.rs`): respira parado (8 quadros), bate a patinha
   no chão depois de alguns segundos parado, trota em 6 quadros (patas em pares diagonais,
   cauda balançando), salta com as dianteiras dobradas, agacha ao aterrissar e muda de
@@ -20,7 +21,9 @@ Detalhes técnicos do jogo Unicórnio. Para jogar e compilar, veja o [README](RE
 - **Cenário vivo** (`src/ambient.rs` + `src/render/ambient.rs`): passarinhos azuis voando
   sozinhos ou em grupinhos (batendo as asas e planando), borboletas voando em "oito" sobre as
   flores, peixinhos pulando no lago (com respingo e ondinhas), brilhos piscando na água e no
-  arco-íris, cachoeiras com três faixas de água, espuma pulando e névoa, árvores balançando
+  arco-íris, cachoeiras que curvam na borda e abrem ao cair (três faixas de água, brilhos,
+  pedras, espuma, gotas e névoa), cordilheira ao fundo com picos nevados, colinas verdes e névoa no horizonte, lago com gradiente de profundidade, cristas de onda e reflexo
+  das colinas, colinas de pedra com topo ondulado, camadas e grama com tufos, árvores balançando
   com o vento, pétalas caindo das cerejeiras, sol com raios girando e nuvens flutuando. Tudo é
   função do tempo, sem estado: leve.
 - **Tolerância para mãos pequenas**: dá para pular logo após sair de uma beira, o toque em
@@ -35,6 +38,15 @@ scripts/check.sh              # rustfmt + clippy (zero avisos) + testes — o me
 scripts/check.sh --security   # inclui cargo-deny (RustSec, licenças, origens)
 cargo run --example snapshot -- target/snapshots   # capturas de cenas e folha de sprites
 ```
+
+### Teclas de teste
+
+Só nos builds de desenvolvimento (`cargo run`, sem `--release`); no executável de release elas
+não fazem nada:
+
+| Tecla | Ação |
+|---|---|
+| F9 | Começa a festa dos 100 corações agora (não mexe no contador) |
 
 ## Qualidade
 

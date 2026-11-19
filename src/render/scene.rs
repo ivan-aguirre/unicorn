@@ -8,6 +8,7 @@ use macroquad::shapes::draw_rectangle;
 use macroquad::texture::{DrawTextureParams, Texture2D, draw_texture, draw_texture_ex};
 
 use super::ambient;
+use super::backdrop;
 use super::textures::Textures;
 use crate::ambient as ambient_motion;
 use crate::animation::frame_at;
@@ -19,8 +20,8 @@ use crate::effects::ParticleKind;
 use crate::game::Game;
 use crate::level::platform::THICKNESS;
 use crate::level::scenery::{
-    CLOUD_LAYERS, CLOUD_PERIOD, FAR_PARALLAX, FlowerColor, MESA_PARALLAX, Mesa, Parallax, Prop,
-    PropKind, RAINBOW_PARALLAX,
+    CLOUD_LAYERS, CLOUD_PERIOD, FAR_PARALLAX, FlowerColor, MESA_PARALLAX, Parallax, Prop, PropKind,
+    RAINBOW_PARALLAX,
 };
 use crate::level::{Level, span};
 use crate::player::Facing;
@@ -61,7 +62,7 @@ impl View {
 }
 
 /// Colunas da tela virtual (0, 1, 2, ...) em passos de `step` pixels.
-fn columns(step: usize) -> impl Iterator<Item = f32> {
+pub fn columns(step: usize) -> impl Iterator<Item = f32> {
     (0..VIEW_W_PX).step_by(step).map(f32::from)
 }
 
@@ -126,40 +127,9 @@ fn draw_clouds(tex: &Textures, game: &Game, view: View, layer: usize) {
 /// Montanhas distantes e o mar cintilante.
 fn draw_far(view: View) {
     let offset = view.cam * FAR_PARALLAX.factor();
-    let (body, top) = (color(0x8c_c9_b4), color(0xb8_e4_d0));
-    for x in columns(2) {
-        let lx = x + offset;
-        let peaks = 10.0f32.mul_add(
-            lx.mul_add(0.034, 1.3).sin(),
-            15.0f32.mul_add((lx * 0.0126).sin(), 173.0),
-        );
-        let peak = peaks.round();
-        draw_rectangle(x, peak, 2.0, SEA_Y - peak, body);
-        draw_rectangle(x, peak, 2.0, 3.0, top);
-    }
-    draw_rectangle(0.0, SEA_Y, VIEW_W, VIEW_H - SEA_Y, color(0x3f_86_e0));
-    draw_rectangle(0.0, SEA_Y, VIEW_W, 3.0, color(0x9f_d4_ff));
-    draw_sea_shimmer(view, offset);
+    backdrop::draw_mountains(view.cam);
+    backdrop::draw_water(offset, view.time);
     ambient::draw_glints(view.cam, view.time);
-}
-
-fn draw_sea_shimmer(view: View, offset: f32) {
-    let light = color(0xc4_e6_ff);
-    for (row, y) in [
-        (0.0f32, 215.0f32),
-        (1.0, 225.0),
-        (2.0, 238.0),
-        (3.0, 255.0),
-        (4.0, 277.0),
-    ] {
-        let wobble = view.time.mul_add(1.5, row).sin() * 5.0;
-        let speed = 0.2f32.mul_add(row, 1.0);
-        let start = offset.mul_add(-speed, wobble).rem_euclid(80.0) - 80.0;
-        for x in columns(80) {
-            let sx = row.mul_add(15.0, start + x);
-            draw_rectangle(sx.round(), y, 2.0f32.mul_add(-row, 16.0), 2.0, light);
-        }
-    }
 }
 
 fn draw_rainbows(tex: &Textures, game: &Game, view: View) {
@@ -189,35 +159,8 @@ fn draw_mesas(game: &Game, view: View) {
         left - 210.0,
         left + VIEW_W,
     ) {
-        let sx = m.x - left;
-        draw_mesa(m, sx);
-        if let Some(w) = m.waterfall {
-            ambient::draw_waterfall(sx + w.offset, w.w, m.top, view.time);
-        }
+        backdrop::draw_mesa(m, m.x - left, view.time);
     }
-}
-
-/// Colina de topo gramado com cantos arredondados, luz à esquerda e sombra à direita.
-fn draw_mesa(m: &Mesa, sx: f32) {
-    let (top, height) = (m.top, MESA_BASE - m.top);
-    draw_rectangle(sx, top + 3.0, m.w, height - 3.0, color(0x4f_9c_78));
-    let stripe = color(0x43_88_68);
-    for dx in columns(12).take_while(|dx| *dx < m.w - 13.0) {
-        draw_rectangle(sx + dx + 8.0, top + 12.0, 3.0, height - 12.0, stripe);
-    }
-    draw_rectangle(sx, top + 10.0, 3.0, height - 10.0, color(0x68_b8_8e));
-    draw_rectangle(
-        sx + m.w - 3.0,
-        top + 10.0,
-        3.0,
-        height - 10.0,
-        color(0x3a_78_5c),
-    );
-    let grass = color(0x7a_d8_7c);
-    draw_rectangle(sx + 3.0, top, m.w - 6.0, 1.0, grass);
-    draw_rectangle(sx + 1.0, top + 1.0, m.w - 2.0, 2.0, grass);
-    draw_rectangle(sx, top + 3.0, m.w, 5.0, grass);
-    draw_rectangle(sx, top + 8.0, m.w, 3.0, color(0x2f_7a_52));
 }
 
 /// Enfeites do chão visíveis (com margem para os que entram pela borda).

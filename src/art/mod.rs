@@ -34,6 +34,8 @@ pub struct Art {
     pub sun: Vec<Pixmap>,
     pub critters: Critters,
     pub rainbow: Pixmap,
+    /// Nuvens sorridentes nas bases do arco-íris da festa (esquerda e direita).
+    pub party_clouds: [Pixmap; 2],
     pub soil: Pixmap,
     pub grass: Pixmap,
     pub glyphs: Vec<(char, Pixmap)>,
@@ -70,6 +72,10 @@ impl Art {
             sun: (0..procedural::SUN_FRAMES).map(procedural::sun).collect(),
             critters: Critters::build()?,
             rainbow: procedural::rainbow(),
+            party_clouds: [
+                procedural::smiley_cloud(procedural::CloudFace::Happy),
+                procedural::smiley_cloud(procedural::CloudFace::Cheering),
+            ],
             soil: procedural::soil(),
             grass: procedural::grass(),
             glyphs: sprites::GLYPHS

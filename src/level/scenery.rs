@@ -105,6 +105,100 @@ pub struct Mesa {
     pub waterfall: Option<Waterfall>,
 }
 
+/// Uma cadeia de montanhas no horizonte: duas ondas triangulares somadas (picos pontudos) ou
+/// suavizadas (colinas redondas).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Range {
+    pub parallax: Parallax,
+    /// Linha de base (onde a cadeia encontra a névoa do horizonte).
+    pub base: f32,
+    /// (altura, período) de cada onda.
+    pub waves: [(f32, f32); 2],
+    pub seed: f32,
+    /// Colinas arredondadas em vez de picos.
+    pub rounded: bool,
+}
+
+/// Cordilheira distante (picos com neve) e colinas verdes na frente dela.
+pub const RANGES: [Range; 2] = [
+    Range {
+        parallax: Parallax(5),
+        base: 204.0,
+        waves: [(80.0, 190.0), (56.0, 113.0)],
+        seed: 0.3,
+        rounded: false,
+    },
+    Range {
+        parallax: Parallax(12),
+        base: 206.0,
+        waves: [(24.0, 170.0), (9.0, 53.0)],
+        seed: 1.7,
+        rounded: true,
+    },
+];
+
+impl Range {
+    /// Altura (`y`) da crista na coordenada `x` da camada.
+    #[must_use]
+    pub fn top_at(&self, x: f32) -> f32 {
+        let waves = self
+            .waves
+            .iter()
+            .zip([1.0f32, 2.3])
+            .map(|(&(height, period), k)| {
+                let t = triangle(self.seed.mul_add(k, x / period));
+                (height, t)
+            });
+        // Colinas: as ondas se somam, suavizadas. Picos: vale o mais alto dos dois, para os
+        // picos ficarem sempre pontudos (somar ondas cria platôs onde elas se anulam).
+        let lift = if self.rounded {
+            waves
+                .map(|(h, t)| h * t * t * 2.0f32.mul_add(-t, 3.0))
+                .sum()
+        } else {
+            waves.map(|(h, t)| h * t).fold(0.0, f32::max)
+        };
+        self.base - lift
+    }
+}
+
+/// Onda triangular de 0 a 1 (pico no meio de cada período).
+fn triangle(t: f32) -> f32 {
+    1.0 - 2.0f32.mul_add(t.rem_euclid(1.0), -1.0).abs()
+}
+
+/// Largura dos "ombros" arredondados de cada lado da colina.
+const SHOULDER: f32 = 16.0;
+/// Profundidade do sulco por onde a cachoeira escorre.
+const GROOVE: f32 = 4.0;
+
+impl Mesa {
+    /// Altura do topo a `dx` pixels da borda esquerda: ondulado, com ombros arredondados
+    /// nas laterais e um sulco plano onde nasce a cachoeira.
+    #[must_use]
+    pub fn top_at(&self, dx: f32) -> f32 {
+        if let Some(w) = self.waterfall
+            && (w.offset - 2.0..=w.offset + w.w + 2.0).contains(&dx)
+        {
+            return self.top + GROOVE;
+        }
+        let seed = self.x * 0.0137;
+        let bumps = 3.0f32.mul_add(
+            dx.mul_add(0.09, seed).sin(),
+            1.5 * dx.mul_add(0.23, seed * 3.0).sin(),
+        );
+        let edge = dx.min(self.w - 1.0 - dx).max(0.0);
+        let shoulder = (SHOULDER - edge).max(0.0).powi(2) / 10.0;
+        self.top + bumps + shoulder
+    }
+
+    /// Onde a água da cachoeira começa a cair.
+    #[must_use]
+    pub fn waterfall_top(&self) -> f32 {
+        self.top + GROOVE
+    }
+}
+
 /// Nuvem de uma camada (coordenadas dentro do período da camada).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Cloud {
@@ -282,6 +376,86 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn colinas_tem_ombros_redondos_e_topo_ondulado() {
+        let m = Mesa {
+            x: 1234.0,
+            w: 160.0,
+            top: 120.0,
+            waterfall: None,
+        };
+        // Nas bordas o topo desce (ombro arredondado), no meio fica perto da altura base.
+        assert!(m.top_at(0.0) > m.top + 15.0);
+        assert!(m.top_at(m.w - 1.0) > m.top + 15.0);
+        assert!((m.top_at(80.0) - m.top).abs() <= 4.5);
+        // O topo não é reto: varia ao longo da colina.
+        let tops: Vec<f32> = (20..140_u8).map(|d| m.top_at(f32::from(d))).collect();
+        let lowest = tops.iter().copied().fold(f32::MAX, f32::min);
+        let highest = tops.iter().copied().fold(f32::MIN, f32::max);
+        assert!(highest - lowest > 3.0);
+    }
+
+    #[test]
+    fn cachoeira_nasce_num_sulco_plano() {
+        let fall = Waterfall {
+            offset: 60.0,
+            w: 16.0,
+        };
+        let m = Mesa {
+            x: 50.0,
+            w: 160.0,
+            top: 120.0,
+            waterfall: Some(fall),
+        };
+        for d in 60..76_u8 {
+            assert!((m.top_at(f32::from(d)) - m.waterfall_top()).abs() < f32::EPSILON);
+        }
+    }
+
+    #[test]
+    fn montanhas_do_horizonte_ficam_no_ceu_e_tem_relevo() {
+        for range in RANGES {
+            let tops: Vec<f32> = (0..2000_u16).map(|x| range.top_at(f32::from(x))).collect();
+            let highest = tops.iter().copied().fold(f32::MAX, f32::min);
+            let lowest = tops.iter().copied().fold(f32::MIN, f32::max);
+            assert!(highest > 100.0, "pico alto demais: {highest}");
+            assert!(lowest <= range.base + f32::EPSILON);
+            assert!(lowest - highest > 20.0, "cordilheira sem relevo");
+        }
+        // As colinas da frente ficam abaixo dos picos mais altos da cordilheira.
+        let peaks = (0..2000_u16)
+            .map(|x| RANGES[0].top_at(f32::from(x)))
+            .fold(f32::MAX, f32::min);
+        let hills = (0..2000_u16)
+            .map(|x| RANGES[1].top_at(f32::from(x)))
+            .fold(f32::MAX, f32::min);
+        assert!(hills > peaks + 20.0);
+    }
+
+    #[test]
+    fn picos_nao_formam_platos() {
+        let range = RANGES[0];
+        let longest_flat = (0..3000_u16)
+            .map(|x| (range.top_at(f32::from(x)) - range.top_at(f32::from(x) + 1.0)).abs() < 0.05)
+            .fold((0, 0), |(best, run), flat| {
+                if flat {
+                    (best.max(run + 1), run + 1)
+                } else {
+                    (best, 0)
+                }
+            })
+            .0;
+        assert!(longest_flat < 6, "platô de {longest_flat} px");
+    }
+
+    #[test]
+    fn onda_triangular_vai_de_zero_a_um() {
+        assert!(triangle(0.0).abs() < 1e-6);
+        assert!((triangle(0.5) - 1.0).abs() < 1e-6);
+        assert!((triangle(0.25) - 0.5).abs() < 1e-6);
+        assert!((triangle(1.75) - 0.5).abs() < 1e-6);
     }
 
     #[test]

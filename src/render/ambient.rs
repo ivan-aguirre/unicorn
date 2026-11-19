@@ -116,11 +116,45 @@ fn ripple(at: Vec2, growth: f32) {
     draw_ellipse_lines(at.x, at.y, w * 0.5, w * 0.18, 0.0, 1.0, white(alpha * 0.8));
 }
 
-/// Cachoeira: três faixas de água em velocidades diferentes, borda brilhante no alto,
-/// bolhas de espuma pulando na base e névoa subindo e sumindo.
+/// Cachoeira: a água passa curvando pela borda, abre um pouco ao cair, desce em três
+/// faixas de velocidades diferentes com brilhos, e na base há pedras, espuma pulando, gotas
+/// saltando e névoa.
 pub fn draw_waterfall(left: f32, width: f32, top: f32, time: f32) {
     let height = MESA_BASE - top;
-    draw_rectangle(left, top, width, height, color(0x8f_d6_ff));
+    fall_body(left, width, top, height);
+    fall_lanes(left, width, top, height, time);
+    fall_sparkles(left, width, (top, height), time);
+    // Borda curva: a água "rola" por cima da pedra antes de cair.
+    draw_rectangle(left - 3.0, top - 2.0, width + 6.0, 3.0, WHITE);
+    draw_rectangle(left - 1.0, top - 3.0, width + 2.0, 1.0, color(0xe4_f6_ff));
+    draw_rectangle(left - 4.0, top, 2.0, 2.0, color(0xc4_ec_ff));
+    draw_rectangle(left + width + 2.0, top, 2.0, 2.0, color(0xc4_ec_ff));
+    waterfall_foot(
+        left + width / 2.0,
+        spread_at(height).mul_add(2.0, width),
+        time,
+    );
+}
+
+/// Quanto a água já se abriu (para cada lado) depois de cair `drop` pixels.
+fn spread_at(drop: f32) -> f32 {
+    (drop / 16.0).floor()
+}
+
+/// Corpo da queda: mais claro no alto, abrindo um pouco e com as bordas mais escuras.
+fn fall_body(left: f32, width: f32, top: f32, height: f32) {
+    for row in offsets(2, height) {
+        let spread = spread_at(row);
+        let body = if row < 8.0 { 0xc8_f0_ff } else { 0x8f_d6_ff };
+        let (x, w) = (left - spread, 2.0f32.mul_add(spread, width));
+        draw_rectangle(x, top + row, w, 2.0, color(body));
+        draw_rectangle(x, top + row, 2.0, 2.0, color(0x5f_b8_f0));
+        draw_rectangle(x + w - 2.0, top + row, 2.0, 2.0, color(0x5f_b8_f0));
+    }
+}
+
+/// Três faixas de água descendo em velocidades diferentes.
+fn fall_lanes(left: f32, width: f32, top: f32, height: f32, time: f32) {
     let lane = width / 3.0;
     let lanes: [(f32, f32, usize, u32); 3] = [
         (0.0, 70.0, 12, 0xc4_ec_ff),
@@ -128,23 +162,49 @@ pub fn draw_waterfall(left: f32, width: f32, top: f32, time: f32) {
         (2.0, 85.0, 14, 0xc4_ec_ff),
     ];
     for (i, speed, gap, hex) in lanes {
-        let x = i.mul_add(lane, left + 1.0);
         for offset in offsets(gap, height) {
-            let y = top
-                + time
-                    .mul_add(speed, i.mul_add(5.0, offset))
-                    .rem_euclid(height);
-            draw_rectangle(x.round(), y.round(), (lane - 1.0).round(), 3.0, color(hex));
+            let drop = time
+                .mul_add(speed, i.mul_add(5.0, offset))
+                .rem_euclid(height);
+            let spread = spread_at(drop);
+            let x = (i - 1.0).mul_add(spread, i.mul_add(lane, left + 1.0));
+            draw_rectangle(
+                x.round(),
+                (top + drop).round(),
+                (lane - 1.0).round(),
+                3.0,
+                color(hex),
+            );
         }
     }
-    let edge = color(0x5f_b8_f0);
-    draw_rectangle(left, top, 2.0, height, edge);
-    draw_rectangle(left + width - 2.0, top, 2.0, height, edge);
-    draw_rectangle(left - 2.0, top - 2.0, width + 4.0, 3.0, WHITE);
-    waterfall_foot(left + width / 2.0, width, time);
+}
+
+/// Brilhos descendo junto com a água.
+fn fall_sparkles(left: f32, width: f32, (top, height): (f32, f32), time: f32) {
+    for j in [0.0f32, 1.0, 2.0] {
+        let drop = time.mul_add(60.0, j * height / 3.0).rem_euclid(height);
+        let x = width.mul_add(j.mul_add(0.25, 0.25), left).round();
+        let glow = twinkle(j.mul_add(2.1, left), time);
+        if glow > 0.1 {
+            draw_rectangle(x, (top + drop).round(), 1.0, 2.0, white(glow));
+            draw_rectangle(
+                x - 1.0,
+                (top + drop).round() + 1.0,
+                3.0,
+                1.0,
+                white(glow * 0.7),
+            );
+        }
+    }
 }
 
 fn waterfall_foot(center: f32, width: f32, time: f32) {
+    // Pedras arredondadas dos dois lados da queda.
+    for (dx, r) in [(-0.5f32, 5.0f32), (0.5, 4.0)] {
+        let x = dx.signum().mul_add(4.0, dx.mul_add(width, center));
+        draw_circle(x, MESA_BASE + 1.0, r, color(0x7d_8a_a0));
+        draw_circle(x - 1.0, MESA_BASE - 1.0, r - 2.0, color(0xa8_b4_c8));
+    }
     // Névoa: nuvenzinhas que sobem, crescem e somem.
     for j in [0.0f32, 1.0, 2.0] {
         let p = time.mul_add(0.45, j / 3.0).rem_euclid(1.0);
@@ -152,7 +212,11 @@ fn waterfall_foot(center: f32, width: f32, time: f32) {
         let y = 18.0f32.mul_add(-p, MESA_BASE - 6.0);
         draw_circle(x, y, 4.0f32.mul_add(p, 4.0), white(0.55 * (1.0 - p)));
     }
-    // Bolhas de espuma pulando na base.
+    foam_and_drops(center, width, time);
+}
+
+/// Bolhas de espuma pulando e gotas saltando em arco para os lados.
+fn foam_and_drops(center: f32, width: f32, time: f32) {
     for j in [0.0f32, 1.0, 2.0, 3.0, 4.0, 5.0] {
         let x = (j - 2.5).mul_add((width + 8.0) / 5.0, center);
         let hop = time.mul_add(5.0, j * 1.3).sin().abs() * 4.0;
@@ -162,6 +226,12 @@ fn waterfall_foot(center: f32, width: f32, time: f32) {
             3.0 + (j % 2.0),
             WHITE,
         );
+        let p = time.mul_add(0.9, j / 6.0).rem_euclid(1.0);
+        let side = if j % 2.0 < 1.0 { -1.0 } else { 1.0 };
+        let arc = 4.0 * p * (1.0 - p);
+        let drop_x = (side * p).mul_add(14.0, x);
+        let drop_y = 14.0f32.mul_add(-arc, MESA_BASE - 4.0);
+        draw_rectangle(drop_x.round(), drop_y.round(), 2.0, 2.0, white(1.0 - p));
     }
 }
 
