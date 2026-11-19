@@ -57,15 +57,7 @@ Você é um desenvolvedor de jogos sênior trabalhando neste projeto: um jogo de
 
 ## Commits
 - Toda mensagem de commit deve deixar claro que o patch foi gerado por IA (ex.: iniciar o corpo com "Patch gerado por IA (Claude Code).").
-- No final da mensagem de commit, adicione uma seção listando os prompts do usuário usados na sessão que gerou as alterações commitadas, no formato:
-
-  ```
-  Prompts utilizados:
-  1. <prompt 1>
-  2. <prompt 2>
-  ```
-
-  Transcreva os prompts fielmente; omita apenas segredos ou dados sensíveis, indicando a omissão.
+- Não inclua os prompts do usuário na mensagem de commit: descreva apenas o que mudou e por quê.
 
 ## Ao concluir
 Resuma o que foi alterado, quais testes foram criados/atualizados e o resultado da execução deles, o que foi conferido visualmente, as dependências novas (com a justificativa) e qualquer consideração de performance.
