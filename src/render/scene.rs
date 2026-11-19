@@ -10,7 +10,7 @@ use macroquad::texture::{DrawTextureParams, Texture2D, draw_texture, draw_textur
 use super::textures::Textures;
 use crate::art::flower_index;
 use crate::art::procedural::{GRASS_TIP, GROUND_TILE};
-use crate::art::unicorn::FEET;
+use crate::art::unicorn::{FEET, FRAME_W, HEAD_AT};
 use crate::effects::ParticleKind;
 use crate::game::Game;
 use crate::level::platform::THICKNESS;
@@ -360,23 +360,38 @@ fn draw_hearts(tex: &Textures, game: &Game, view: View) {
     }
 }
 
+/// Unicórnio em camadas: corpo, braço de trás, cabeça (pela expressão) e braço da frente.
 fn draw_player(tex: &Textures, game: &Game, view: View) {
     let player = &game.player;
-    let Some(frame) = tex.unicorn.get(player.pose().index()) else {
+    let frame = tex.unicorn.get(player.pose().index());
+    let head = tex.heads.get(player.expression().index());
+    let (Some(frame), Some(head)) = (frame, head) else {
         return;
     };
-    let x = (player.pos.x - view.cam - FEET.0).round();
-    let y = (player.pos.y - FEET.1).round();
-    draw_texture_ex(
-        frame,
-        x,
-        y,
-        WHITE,
-        DrawTextureParams {
-            flip_x: player.facing == Facing::Left,
-            ..Default::default()
-        },
+    let flip = player.facing == Facing::Left;
+    let origin = Vec2::new(
+        (player.pos.x - view.cam - FEET.0).round(),
+        (player.pos.y - FEET.1).round(),
     );
+    // Espelhado, a cabeça vai para o outro lado do quadro.
+    let head_x = if flip {
+        f32::from(FRAME_W - HEAD_AT.0) - head.width()
+    } else {
+        f32::from(HEAD_AT.0)
+    };
+    let head_at = origin + Vec2::new(head_x, f32::from(HEAD_AT.1) + frame.head_drop);
+    for (t, at) in [
+        (&frame.body, origin),
+        (&frame.back_arm, origin),
+        (head, head_at),
+        (&frame.front_arm, origin),
+    ] {
+        let params = DrawTextureParams {
+            flip_x: flip,
+            ..Default::default()
+        };
+        draw_texture_ex(t, at.x, at.y, WHITE, params);
+    }
 }
 
 fn draw_particles(tex: &Textures, game: &Game, view: View) {

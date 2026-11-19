@@ -5,9 +5,18 @@ use macroquad::texture::{FilterMode, Texture2D, build_textures_atlas};
 use crate::art::Art;
 use crate::art::pixmap::Pixmap;
 
+/// Camadas de um quadro do unicórnio na GPU.
+pub struct UnicornFrame {
+    pub body: Texture2D,
+    pub back_arm: Texture2D,
+    pub front_arm: Texture2D,
+    pub head_drop: f32,
+}
+
 /// Texturas do jogo, espelhando [`Art`].
 pub struct Textures {
-    pub unicorn: Vec<Texture2D>,
+    pub unicorn: Vec<UnicornFrame>,
+    pub heads: Vec<Texture2D>,
     pub heart: Texture2D,
     pub heart_small: Texture2D,
     pub star: Texture2D,
@@ -30,7 +39,17 @@ impl Textures {
     pub fn upload(art: &Art) -> Self {
         let pair = |p: &[Pixmap; 2]| [texture(&p[0]), texture(&p[1])];
         let textures = Self {
-            unicorn: art.unicorn.iter().map(texture).collect(),
+            unicorn: art
+                .unicorn
+                .iter()
+                .map(|f| UnicornFrame {
+                    body: texture(&f.body),
+                    back_arm: texture(&f.back_arm),
+                    front_arm: texture(&f.front_arm),
+                    head_drop: f32::from(f.head_drop),
+                })
+                .collect(),
+            heads: art.heads.iter().map(texture).collect(),
             heart: texture(&art.heart),
             heart_small: texture(&art.heart_small),
             star: texture(&art.star),

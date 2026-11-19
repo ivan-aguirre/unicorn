@@ -6,6 +6,7 @@
 
 use macroquad::math::{Rect, Vec2};
 
+use crate::animation::{Animator, Expression, Motion, Pose};
 use crate::input::Input;
 use crate::level::Level;
 
@@ -29,18 +30,6 @@ const MAX_FALL: f32 = 700.0;
 const COYOTE_TIME: f32 = 0.1;
 /// Tempo em que um toque em espaço fica guardado antes de tocar o chão.
 const JUMP_BUFFER: f32 = 0.15;
-/// Abaixo desta velocidade o unicórnio é considerado parado.
-const WALK_THRESHOLD: f32 = 13.0;
-/// Quadros da caminhada e duração de cada um na velocidade máxima.
-pub const WALK_FRAMES: u8 = 6;
-const WALK_FRAME_TIME: f32 = 0.085;
-/// Quadros da respiração (parado) e duração de cada um.
-pub const IDLE_FRAMES: u8 = 4;
-const IDLE_FRAME_TIME: f32 = 0.4;
-/// Intervalo entre piscadas e duração da piscada.
-const BLINK_EVERY: f32 = 3.2;
-const BLINK_FOR: f32 = 0.16;
-
 /// Para onde o unicórnio olha.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Facing {
@@ -67,36 +56,6 @@ enum Support {
     Platform(usize),
 }
 
-/// Pose de animação, derivada do estado físico.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Pose {
-    /// Parado, respirando (`breath` de 0 a 3), às vezes piscando.
-    Idle {
-        breath: u8,
-        blink: bool,
-    },
-    Walk(u8),
-    Jump,
-    Fall,
-}
-
-impl Pose {
-    /// Quantidade de quadros distintos de animação.
-    pub const COUNT: usize = 13;
-
-    /// Índice do quadro na folha de sprites.
-    #[must_use]
-    pub fn index(self) -> usize {
-        match self {
-            Self::Idle { blink: true, .. } => 4,
-            Self::Idle { breath, .. } => usize::from(breath % IDLE_FRAMES),
-            Self::Walk(frame) => 5 + usize::from(frame % WALK_FRAMES),
-            Self::Jump => 11,
-            Self::Fall => 12,
-        }
-    }
-}
-
 /// Estado do unicórnio.
 #[derive(Debug, Clone)]
 pub struct Player {
@@ -106,9 +65,7 @@ pub struct Player {
     support: Support,
     coyote: f32,
     jump_buffer: f32,
-    walk_frame: u8,
-    walk_clock: f32,
-    idle_clock: f32,
+    anim: Animator,
 }
 
 impl Player {
@@ -122,9 +79,7 @@ impl Player {
             support: Support::Ground,
             coyote: 0.0,
             jump_buffer: 0.0,
-            walk_frame: 0,
-            walk_clock: 0.0,
-            idle_clock: 0.0,
+            anim: Animator::default(),
         }
     }
 
@@ -136,7 +91,7 @@ impl Player {
         if self.support == Support::Air {
             self.move_vertically(level, dt);
         }
-        self.animate(dt);
+        self.anim.tick(self.motion(), dt);
         jumped
     }
 
@@ -157,25 +112,28 @@ impl Player {
         )
     }
 
-    /// Pose de animação atual.
+    /// Pose do corpo para a animação.
     #[must_use]
     pub fn pose(&self) -> Pose {
-        if self.support == Support::Air {
-            return if self.vel.y < 0.0 {
-                Pose::Jump
-            } else {
-                Pose::Fall
-            };
-        }
-        if self.vel.x.abs() > WALK_THRESHOLD {
-            return Pose::Walk(self.walk_frame);
-        }
-        let breath = self.idle_clock % (IDLE_FRAME_TIME * f32::from(IDLE_FRAMES));
-        Pose::Idle {
-            breath: u8::from(breath >= IDLE_FRAME_TIME)
-                + u8::from(breath >= IDLE_FRAME_TIME * 2.0)
-                + u8::from(breath >= IDLE_FRAME_TIME * 3.0),
-            blink: self.idle_clock % BLINK_EVERY > BLINK_EVERY - BLINK_FOR,
+        self.anim.pose(self.motion())
+    }
+
+    /// Expressão do rosto para a animação.
+    #[must_use]
+    pub fn expression(&self) -> Expression {
+        self.anim.expression(self.motion())
+    }
+
+    /// Pegou um coração: carinha de alegria.
+    pub const fn cheer(&mut self) {
+        self.anim.cheer();
+    }
+
+    fn motion(&self) -> Motion {
+        Motion {
+            airborne: self.support == Support::Air,
+            rising: self.vel.y < 0.0,
+            speed: self.vel.x.abs(),
         }
     }
 
@@ -271,25 +229,10 @@ impl Player {
     }
 
     const fn land(&mut self, support: Support, y: f32) {
+        self.anim.landed(self.vel.y);
         self.support = support;
         self.pos.y = y;
         self.vel.y = 0.0;
-    }
-
-    /// Avança os relógios de animação (caminhada proporcional à velocidade).
-    fn animate(&mut self, dt: f32) {
-        let walking = self.on_ground() && self.vel.x.abs() > WALK_THRESHOLD;
-        if !walking {
-            self.walk_clock = 0.0;
-            self.idle_clock += dt;
-            return;
-        }
-        self.idle_clock = 0.0;
-        self.walk_clock = dt.mul_add(self.vel.x.abs() / MAX_SPEED, self.walk_clock);
-        if self.walk_clock >= WALK_FRAME_TIME {
-            self.walk_clock -= WALK_FRAME_TIME;
-            self.walk_frame = (self.walk_frame + 1) % WALK_FRAMES;
-        }
     }
 }
 
@@ -368,7 +311,7 @@ mod tests {
         assert!(p.vel.x < 0.0);
         run(&mut p, &level, Input::default(), 0.5);
         assert!(p.vel.x.abs() < f32::EPSILON);
-        assert!(matches!(p.pose(), Pose::Idle { .. }));
+        assert!(matches!(p.pose(), Pose::Idle(_)));
     }
 
     #[test]
@@ -497,53 +440,6 @@ mod tests {
         assert!((p.pos.x - HALF_W).abs() < f32::EPSILON);
         run(&mut p, &level, RIGHT, 30.0);
         assert!((p.pos.x - (2000.0 - HALF_W)).abs() < f32::EPSILON);
-    }
-
-    #[test]
-    fn pisca_de_vez_em_quando_quando_parado() {
-        let level = flat();
-        let mut p = Player::spawn(&level, 300.0);
-        let mut blinked = false;
-        for _ in 0..steps(BLINK_EVERY + 0.1) {
-            p.update(Input::default(), &level, STEP);
-            blinked |= matches!(p.pose(), Pose::Idle { blink: true, .. });
-        }
-        assert!(blinked);
-    }
-
-    #[test]
-    fn parado_respira_em_ciclo() {
-        let level = flat();
-        let mut p = Player::spawn(&level, 300.0);
-        let mut breaths = Vec::new();
-        for _ in 0..steps(IDLE_FRAME_TIME.mul_add(4.0, -0.05)) {
-            p.update(Input::default(), &level, STEP);
-            if let Pose::Idle { breath, .. } = p.pose() {
-                breaths.push(breath);
-            }
-        }
-        breaths.dedup();
-        assert_eq!(breaths, [0, 1, 2, 3]);
-    }
-
-    #[test]
-    fn indices_de_pose_sao_unicos_e_cabem_na_folha() {
-        let mut poses: Vec<Pose> = (0..IDLE_FRAMES)
-            .map(|breath| Pose::Idle {
-                breath,
-                blink: false,
-            })
-            .collect();
-        poses.push(Pose::Idle {
-            breath: 0,
-            blink: true,
-        });
-        poses.extend((0..WALK_FRAMES).map(Pose::Walk));
-        poses.extend([Pose::Jump, Pose::Fall]);
-        let mut seen: Vec<usize> = poses.iter().map(|p| p.index()).collect();
-        seen.sort_unstable();
-        seen.dedup();
-        assert_eq!(seen, (0..Pose::COUNT).collect::<Vec<_>>());
     }
 
     #[test]

@@ -28,11 +28,11 @@ pub fn window_conf() -> Conf {
 }
 
 fn window_icon(art: &Art) -> Option<Icon> {
-    let frame = art.unicorn.first()?;
+    let head = art.heads.first()?;
     Some(Icon {
-        small: art::icon(frame, 16).try_into().ok()?,
-        medium: art::icon(frame, 32).try_into().ok()?,
-        big: art::icon(frame, 64).try_into().ok()?,
+        small: art::icon(head, 16).try_into().ok()?,
+        medium: art::icon(head, 32).try_into().ok()?,
+        big: art::icon(head, 64).try_into().ok()?,
     })
 }
 

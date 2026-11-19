@@ -81,11 +81,20 @@ fn save(renderer: &Renderer, path: &str) {
 
 /// Todos os quadros do unicórnio e alguns sprites lado a lado (montado na CPU).
 fn sprite_sheet(art: &Art, path: &str) {
-    let sprites: Vec<&Pixmap> = art
+    let frames: Vec<Pixmap> = art
         .unicorn
         .iter()
+        .flat_map(|f| {
+            art.heads
+                .iter()
+                .take(1)
+                .map(|h| unicorn::art::unicorn::compose(f, h))
+        })
+        .chain(art.heads.iter().cloned())
+        .collect();
+    let sprites: Vec<&Pixmap> = frames
+        .iter()
         .chain([&art.heart, &art.star, &art.flowers[0][0], &art.bush])
-        .chain(art.glyphs.iter().map(|(_, g)| g))
         .collect();
     let width = sprites.iter().map(|p| p.width() + 2).sum::<u16>() + 2;
     let height = sprites.iter().map(|p| p.height()).max().unwrap_or(1) + 4;

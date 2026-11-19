@@ -108,6 +108,7 @@ impl Game {
     fn collect_hearts(&mut self, events: &mut Events) {
         for pos in self.hearts.collect(self.player.hitbox()) {
             events.hearts += 1;
+            self.player.cheer();
             self.effects.sparkle(pos);
             if self.counter.add() {
                 events.celebrated = true;
