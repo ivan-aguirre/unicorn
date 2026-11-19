@@ -10,7 +10,7 @@ Detalhes técnicos do jogo Unicórnio. Para jogar e compilar, veja o [README](RE
   sobre plataformas. A posição deles muda a cada partida.
 - Cada coração pego **reaparece aleatoriamente** em outro lugar, fora da tela e de preferência
   à frente do unicórnio — nunca faltam corações.
-- **A cada 100 corações a contagem volta a zero**, com festa: arco-íris gigante, chuva de
+- **A cada 50 corações a contagem volta a zero**, com festa: arco-íris gigante, chuva de
   corações e estrelas, uma nuvem sorridente em cada base do arco-íris e uma fanfarra. A barra
   sob o contador mostra o quanto falta.
 - **Unicórnio expressivo** (`src/animation.rs`): respira parado (8 quadros), bate a patinha
@@ -46,17 +46,17 @@ não fazem nada:
 
 | Tecla | Ação |
 |---|---|
-| F9 | Começa a festa dos 100 corações agora (não mexe no contador) |
+| F9 | Começa a festa dos 50 corações agora (não mexe no contador) |
 
 ## Qualidade
 
-- **Linter agressivo** (base do projeto Fono, mais rígido): clippy `pedantic` + `nursery` + `cargo` como
+- **Linter agressivo** (mais rígido que o padrão): clippy `pedantic` + `nursery` + `cargo` como
   erro, complexidade cognitiva ≤ 10 (SonarQube usa 15; clippy, 25), funções ≤ 50 linhas, ≤ 5 argumentos, aninhamento ≤ 4,
   proibição de `unwrap`/`expect`/`panic`/indexação direta e `unsafe` fora de testes. Nenhum
   `#[allow]` no código.
 - **Testes**: unitários para toda a lógica e a arte (física, terreno, plataformas, cenário,
   corações, contador, animação, vida no cenário, efeitos, câmera, sprites, som) e partidas
-  simuladas de ponta a ponta em `tests/gameplay.rs` (atravessar o nível inteiro, festa dos 100,
+  simuladas de ponta a ponta em `tests/gameplay.rs` (atravessar o nível inteiro, festa dos 50,
   pausa, pulo alcançando corações no alto), tudo sem janela.
 - **Conferência visual**: o exemplo `snapshot` gera capturas da tela virtual em vários pontos
   do nível, uma sequência de quadros para ver as animações, a festa, a pausa e a folha de
@@ -72,7 +72,7 @@ src/
   player.rs     física do unicórnio (andar, pular, rampas, plataformas)
   animation.rs  pose do corpo e expressão do rosto a partir do movimento
   ambient.rs    trajetórias da vida no cenário (pássaros, peixes, borboletas, pétalas)
-  hearts.rs     corações: distribuição, coleta, reaparecimento e o contador até 100
+  hearts.rs     corações: distribuição, coleta, reaparecimento e o contador até 50
   level/        nível determinístico: terreno, plataformas e cenário com paralaxe
   effects.rs    partículas (brilhos e festa)
   camera.rs     câmera horizontal suave, olhando à frente

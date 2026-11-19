@@ -37,7 +37,7 @@ pub const HEART: &[Tone] = &[
     tone(1318.5, 1318.5, 70, Wave::Sine),
     tone(1975.5, 1975.5, 170, Wave::Sine),
 ];
-/// Fanfarra dos 100 corações (dó-mi-sol-dó).
+/// Fanfarra da meta de corações (dó-mi-sol-dó).
 pub const CELEBRATE: &[Tone] = &[
     tone(523.3, 523.3, 120, Wave::Square),
     tone(659.3, 659.3, 120, Wave::Square),

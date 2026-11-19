@@ -105,7 +105,7 @@ impl Game {
         events
     }
 
-    /// Começa a festa dos 100 corações agora (também usada pela tecla de teste).
+    /// Começa a festa dos corações agora (também usada pela tecla de teste).
     pub fn celebrate_now(&mut self) -> Events {
         self.effects.celebrate(self.camera.x, VIEW_W);
         Events {

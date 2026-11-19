@@ -197,7 +197,7 @@ fn place(rng: &mut Rng, level: &Level, x: f32) -> Vec2 {
     Vec2::new(x, ground - lift)
 }
 
-/// Contador de corações: a cada 100 volta a zero (com festa!).
+/// Contador de corações: a cada 50 volta a zero (com festa!).
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct HeartCounter {
     count: u8,
@@ -205,9 +205,9 @@ pub struct HeartCounter {
 
 impl HeartCounter {
     /// Quantos corações valem uma festa e zeram a contagem.
-    pub const GOAL: u8 = 100;
+    pub const GOAL: u8 = 50;
 
-    /// Soma um coração. Devolve `true` quando completou 100 e voltou a zero.
+    /// Soma um coração. Devolve `true` quando completou a meta e voltou a zero.
     pub const fn add(&mut self) -> bool {
         self.count += 1;
         if self.count >= Self::GOAL {
@@ -217,7 +217,7 @@ impl HeartCounter {
         false
     }
 
-    /// Valor exibido (0 a 99).
+    /// Valor exibido (0 a `GOAL - 1`).
     #[must_use]
     pub const fn value(self) -> u8 {
         self.count
@@ -238,7 +238,7 @@ mod tests {
     }
 
     #[test]
-    fn contador_volta_a_zero_a_cada_cem() {
+    fn contador_volta_a_zero_a_cada_meta() {
         let mut c = HeartCounter::default();
         for i in 1..HeartCounter::GOAL {
             assert!(!c.add());

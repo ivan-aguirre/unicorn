@@ -7,7 +7,7 @@ use unicorn::camera::Camera;
 use unicorn::clock::STEP;
 use unicorn::effects::MAX_PARTICLES;
 use unicorn::game::{Events, Game, Mode};
-use unicorn::hearts::MAX_HEARTS;
+use unicorn::hearts::{HeartCounter, MAX_HEARTS};
 use unicorn::input::{Button, Input};
 use unicorn::level::{Level, SEED};
 use unicorn::player::Player;
@@ -40,8 +40,8 @@ fn play(game: &mut Game, seconds: u32, input: impl Fn(u32) -> Input) -> Events {
     for step in 0..steps(seconds) {
         total = total.merge(game.step(input(step), STEP));
         assert!(
-            game.counter.value() < 100,
-            "o contador deve voltar a zero em 100"
+            game.counter.value() < HeartCounter::GOAL,
+            "o contador deve voltar a zero na meta"
         );
         assert!(game.hearts.len() <= MAX_HEARTS);
         assert!(game.effects.particles().len() <= MAX_PARTICLES);
@@ -69,11 +69,14 @@ fn atravessa_o_nivel_inteiro_coletando_coracoes_e_fazendo_festa() {
         "coletou só {} corações",
         events.hearts
     );
-    assert!(events.celebrated, "deveria ter completado 100 corações");
+    assert!(
+        events.celebrated,
+        "deveria ter completado a meta de corações"
+    );
     assert!(events.jumped);
     assert_eq!(
         game.counter.value(),
-        u8::try_from(events.hearts % 100).unwrap()
+        u8::try_from(events.hearts % u32::from(HeartCounter::GOAL)).unwrap()
     );
 }
 

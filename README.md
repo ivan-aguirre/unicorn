@@ -1,7 +1,7 @@
 # Unicórnio
 
 Jogo de plataforma para crianças pequenas. Não há como perder:
-é só ajudar o unicórnio a juntar corações — a cada 100, tem festa e a contagem recomeça do zero.
+é só ajudar o unicórnio a juntar corações — a cada 50, tem festa e a contagem recomeça do zero.
 
 ## Disclaimer
 

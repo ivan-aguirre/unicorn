@@ -1,4 +1,4 @@
-# Limites de complexidade (linter agressivo). Base do projeto Fono, com a complexidade
+# Limites de complexidade (linter agressivo), com a complexidade
 # cognitiva mais rígida: 10 (o SonarQube usa 15 e o clippy, 25).
 cognitive-complexity-threshold = 10
 too-many-lines-threshold = 50

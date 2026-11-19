@@ -1,4 +1,4 @@
-//! Placar de corações, barra até 100, festa e tela de pausa.
+//! Placar de corações, barra até a meta, festa e tela de pausa.
 
 use macroquad::color::{Color, WHITE};
 use macroquad::math::Vec2;
@@ -19,9 +19,9 @@ const PARTY_RAINBOW_SCALE: f32 = 2.0;
 const PARTY_RAINBOW_TOP: f32 = 40.0;
 /// Distância da borda do arco-íris até o meio de cada base (na imagem original).
 const RAINBOW_FOOT: f32 = 25.5;
-/// Escala do "100" da festa.
+/// Escala do número da meta na festa.
 const PARTY_SCALE: f32 = 5.0;
-/// Largura da barra de progresso até 100.
+/// Largura da barra de progresso até a meta.
 const BAR_W: f32 = 108.0;
 /// Escala do aviso de como sair, na pausa.
 const HINT_SCALE: f32 = 2.0;
@@ -57,7 +57,7 @@ fn draw_counter(tex: &Textures, counter: HeartCounter) {
     draw_rectangle(14.0, 45.0, filled, 6.0, color(0xff_4d_8d));
 }
 
-/// Arco-íris gigante surgindo e sumindo durante a festa, com o "100" no meio.
+/// Arco-íris gigante surgindo e sumindo durante a festa, com o número da meta no meio.
 fn draw_celebration(tex: &Textures, remaining: f32) {
     let elapsed = CELEBRATION_TIME - remaining;
     let alpha = (elapsed * 3.0).min(remaining * 1.5).min(1.0);
@@ -84,7 +84,7 @@ fn draw_celebration(tex: &Textures, remaining: f32) {
         let bob = (elapsed.mul_add(3.0, phase).sin() * 2.0).round();
         draw_centered(cloud, Vec2::new(foot, base_y + bob), 1.0, tint);
     }
-    draw_centered_text(tex, "100", 150.0, PARTY_SCALE);
+    draw_centered_text(tex, &HeartCounter::GOAL.to_string(), 150.0, PARTY_SCALE);
 }
 
 fn draw_pause(tex: &Textures) {

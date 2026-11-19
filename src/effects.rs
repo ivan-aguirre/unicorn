@@ -1,4 +1,4 @@
-//! Efeitos visuais leves: brilhos ao pegar coração e a festa ao completar 100.
+//! Efeitos visuais leves: brilhos ao pegar coração e a festa ao completar a meta.
 
 use fastrand::Rng;
 use macroquad::math::Vec2;
@@ -7,7 +7,7 @@ use crate::level::scenery::range;
 
 /// Limite de partículas vivas (custo constante, sem alocações durante o jogo).
 pub const MAX_PARTICLES: usize = 256;
-/// Duração da festa dos 100 corações.
+/// Duração da festa da meta de corações.
 pub const CELEBRATION_TIME: f32 = 3.5;
 const SPARKLES_PER_HEART: u8 = 8;
 const CELEBRATION_PARTICLES: u8 = 72;

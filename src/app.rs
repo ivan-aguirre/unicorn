@@ -14,7 +14,7 @@ use crate::input::{Button, Input, InputLatch, QuitHold};
 use crate::level::{Level, SEED};
 use crate::render::Renderer;
 
-/// Teclas de teste (F9 começa a festa dos 100 corações): só nos builds de desenvolvimento.
+/// Teclas de teste (F9 começa a festa dos corações): só nos builds de desenvolvimento.
 const TEST_KEYS: bool = cfg!(debug_assertions);
 
 /// Configuração da janela: 2x a tela virtual, redimensionável.
