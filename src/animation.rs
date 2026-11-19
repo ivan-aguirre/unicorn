@@ -1,4 +1,4 @@
-//! Animação do unicórnio: escolhe a pose do corpo e a expressão do rosto a partir do
+//! Animação do pônei-unicórnio: escolhe a pose do corpo e a expressão do rosto a partir do
 //! movimento (puro: testável sem janela).
 //!
 //! Corpo e rosto são independentes — qualquer expressão combina com qualquer pose — e o
@@ -10,13 +10,13 @@ const WALK_FRAME_TIME: f32 = 0.085;
 /// Quadros da respiração (parado) e duração de cada um.
 pub const IDLE_FRAMES: u8 = 8;
 const IDLE_FRAME_TIME: f32 = 0.2;
-/// Quadros do aceno e duração de cada um.
-pub const WAVE_FRAMES: u8 = 4;
-const WAVE_FRAME_TIME: f32 = 0.18;
-/// Parado há este tempo, o unicórnio começa a acenar de vez em quando.
-const WAVE_AFTER: f32 = 3.0;
-const WAVE_EVERY: f32 = 6.0;
-const WAVE_FOR: f32 = 1.44;
+/// Quadros da patinha e duração de cada um.
+pub const PAW_FRAMES: u8 = 4;
+const PAW_FRAME_TIME: f32 = 0.18;
+/// Parado há este tempo, o pônei bate a patinha no chão de vez em quando.
+const PAW_AFTER: f32 = 3.0;
+const PAW_EVERY: f32 = 6.0;
+const PAW_FOR: f32 = 1.44;
 /// Intervalo entre piscadas e duração da piscada.
 const BLINK_EVERY: f32 = 3.2;
 const BLINK_FOR: f32 = 0.16;
@@ -33,8 +33,8 @@ pub const WALK_THRESHOLD: f32 = 13.0;
 pub enum Pose {
     /// Parado, respirando (quadro 0 a 7).
     Idle(u8),
-    /// Acenando com o braço (quadro 0 a 3).
-    Wave(u8),
+    /// Batendo a patinha no chão (quadro 0 a 3).
+    Paw(u8),
     Walk(u8),
     Jump,
     Fall,
@@ -51,7 +51,7 @@ impl Pose {
     pub fn index(self) -> usize {
         match self {
             Self::Idle(f) => usize::from(f % IDLE_FRAMES),
-            Self::Wave(f) => 8 + usize::from(f % WAVE_FRAMES),
+            Self::Paw(f) => 8 + usize::from(f % PAW_FRAMES),
             Self::Walk(f) => 12 + usize::from(f % WALK_FRAMES),
             Self::Jump => 18,
             Self::Fall => 19,
@@ -66,7 +66,7 @@ pub enum Expression {
     /// Sorriso tranquilo.
     Calm,
     Blink,
-    /// Boca aberta, sorrindo (andando, acenando).
+    /// Boca aberta, sorrindo (andando, batendo a patinha).
     Smile,
     /// Olhos brilhando (no ar).
     Excited,
@@ -167,9 +167,9 @@ impl Animator {
         if motion.walking() {
             return Pose::Walk(self.walk_frame);
         }
-        self.waving().map_or_else(
+        self.pawing().map_or_else(
             || Pose::Idle(frame_at(self.idle_clock, IDLE_FRAME_TIME, IDLE_FRAMES)),
-            |t| Pose::Wave(frame_at(t, WAVE_FRAME_TIME, WAVE_FRAMES)),
+            |t| Pose::Paw(frame_at(t, PAW_FRAME_TIME, PAW_FRAMES)),
         )
     }
 
@@ -180,7 +180,7 @@ impl Animator {
             Expression::Joy
         } else if motion.airborne {
             Expression::Excited
-        } else if motion.walking() || self.waving().is_some() {
+        } else if motion.walking() || self.pawing().is_some() {
             Expression::Smile
         } else if self.idle_clock % BLINK_EVERY > BLINK_EVERY - BLINK_FOR {
             Expression::Blink
@@ -189,11 +189,11 @@ impl Animator {
         }
     }
 
-    /// Tempo dentro do aceno atual, se estiver acenando.
-    fn waving(&self) -> Option<f32> {
-        let since = self.idle_clock - WAVE_AFTER;
-        let t = since.rem_euclid(WAVE_EVERY);
-        (since >= 0.0 && t < WAVE_FOR).then_some(t)
+    /// Tempo dentro da batida de patinha atual, se estiver batendo.
+    fn pawing(&self) -> Option<f32> {
+        let since = self.idle_clock - PAW_AFTER;
+        let t = since.rem_euclid(PAW_EVERY);
+        (since >= 0.0 && t < PAW_FOR).then_some(t)
     }
 }
 
@@ -239,7 +239,7 @@ mod tests {
     #[test]
     fn indices_de_pose_sao_unicos_e_cabem_na_folha() {
         let mut poses: Vec<Pose> = (0..IDLE_FRAMES).map(Pose::Idle).collect();
-        poses.extend((0..WAVE_FRAMES).map(Pose::Wave));
+        poses.extend((0..PAW_FRAMES).map(Pose::Paw));
         poses.extend((0..WALK_FRAMES).map(Pose::Walk));
         poses.extend([Pose::Jump, Pose::Fall, Pose::Land]);
         let mut seen: Vec<usize> = poses.iter().map(|p| p.index()).collect();
@@ -281,25 +281,25 @@ mod tests {
     }
 
     #[test]
-    fn parado_por_um_tempo_acena_sorrindo_e_volta_a_respirar() {
+    fn parado_por_um_tempo_bate_a_patinha_sorrindo_e_volta_a_respirar() {
         let mut a = Animator::default();
-        let states = run(&mut a, STILL, WAVE_AFTER + WAVE_EVERY - 0.5);
-        let waving: Vec<&(Pose, Expression)> = states
+        let states = run(&mut a, STILL, PAW_AFTER + PAW_EVERY - 0.5);
+        let pawing: Vec<&(Pose, Expression)> = states
             .iter()
-            .filter(|(p, _)| matches!(p, Pose::Wave(_)))
+            .filter(|(p, _)| matches!(p, Pose::Paw(_)))
             .collect();
-        assert!(!waving.is_empty(), "deveria acenar");
-        assert!(waving.iter().all(|(_, e)| *e == Expression::Smile));
-        let mut frames: Vec<Pose> = waving.iter().map(|(p, _)| *p).collect();
+        assert!(!pawing.is_empty(), "deveria bater a patinha");
+        assert!(pawing.iter().all(|(_, e)| *e == Expression::Smile));
+        let mut frames: Vec<Pose> = pawing.iter().map(|(p, _)| *p).collect();
         frames.dedup();
-        assert!(frames.len() >= usize::from(WAVE_FRAMES));
+        assert!(frames.len() >= usize::from(PAW_FRAMES));
         assert!(matches!(states.last(), Some((Pose::Idle(_), _))));
     }
 
     #[test]
     fn pisca_de_vez_em_quando_quando_parado() {
         let mut a = Animator::default();
-        // A primeira piscada cai durante o aceno (o sorriso vence); a segunda aparece.
+        // A primeira piscada cai durante a patinha (o sorriso vence); a segunda aparece.
         let states = run(&mut a, STILL, BLINK_EVERY.mul_add(2.0, 0.1));
         assert!(states.iter().any(|(_, e)| *e == Expression::Blink));
         assert!(

@@ -96,7 +96,7 @@ fn draw_sky(tex: &Textures, view: View) {
     }
     let frame = usize::from((view.time * 2.0).rem_euclid(2.0) >= 1.0);
     if let Some(sun) = tex.sun.get(frame) {
-        draw_texture(sun, VIEW_W - 104.0, 10.0, WHITE);
+        draw_texture(sun, VIEW_W - 100.0, -4.0, WHITE);
     }
 }
 
@@ -360,7 +360,7 @@ fn draw_hearts(tex: &Textures, game: &Game, view: View) {
     }
 }
 
-/// Unicórnio em camadas: corpo, braço de trás, cabeça (pela expressão) e braço da frente.
+/// Pônei em camadas: corpo (patas, cauda, barriga) e cabeça (pela expressão).
 fn draw_player(tex: &Textures, game: &Game, view: View) {
     let player = &game.player;
     let frame = tex.unicorn.get(player.pose().index());
@@ -380,12 +380,7 @@ fn draw_player(tex: &Textures, game: &Game, view: View) {
         f32::from(HEAD_AT.0)
     };
     let head_at = origin + Vec2::new(head_x, f32::from(HEAD_AT.1) + frame.head_drop);
-    for (t, at) in [
-        (&frame.body, origin),
-        (&frame.back_arm, origin),
-        (head, head_at),
-        (&frame.front_arm, origin),
-    ] {
+    for (t, at) in [(&frame.body, origin), (head, head_at)] {
         let params = DrawTextureParams {
             flip_x: flip,
             ..Default::default()

@@ -8,8 +8,6 @@ use crate::art::pixmap::Pixmap;
 /// Camadas de um quadro do unicórnio na GPU.
 pub struct UnicornFrame {
     pub body: Texture2D,
-    pub back_arm: Texture2D,
-    pub front_arm: Texture2D,
     pub head_drop: f32,
 }
 
@@ -44,8 +42,6 @@ impl Textures {
                 .iter()
                 .map(|f| UnicornFrame {
                     body: texture(&f.body),
-                    back_arm: texture(&f.back_arm),
-                    front_arm: texture(&f.front_arm),
                     head_drop: f32::from(f.head_drop),
                 })
                 .collect(),

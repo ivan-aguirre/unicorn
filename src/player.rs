@@ -11,7 +11,7 @@ use crate::input::Input;
 use crate::level::Level;
 
 /// Meia largura da caixa de colisão.
-pub const HALF_W: f32 = 11.0;
+pub const HALF_W: f32 = 16.0;
 /// Altura da caixa de colisão.
 pub const HEIGHT: f32 = 46.0;
 /// Altura máxima do pulo (pés acima do ponto de partida).

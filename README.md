@@ -1,7 +1,7 @@
 # Unicórnio
 
-Jogo de plataforma para crianças bem pequenas. Um unicórnio fofo — branco, com crina, cauda e
-cascos cor-de-rosa, que anda em duas patas — passeia por um nível longo de grama, colinas com
+Jogo de plataforma para crianças bem pequenas. Um unicórnio fofo — um pônei branco de quatro
+patas, com crina, cauda e cascos cor-de-rosa — passeia por um nível longo de grama, colinas com
 cachoeiras, sol, nuvens e arco-íris, coletando corações.
 
 Não há como perder: o objetivo é só explorar e juntar corações.
@@ -27,9 +27,10 @@ Não há como perder: o objetivo é só explorar e juntar corações.
   à frente do unicórnio — nunca faltam corações.
 - **A cada 100 corações a contagem volta a zero**, com festa: arco-íris gigante, chuva de
   corações e estrelas e uma fanfarra. A barra sob o contador mostra o quanto falta.
-- **Unicórnio expressivo** (`src/animation.rs`): respira parado (8 quadros), acena depois de
-  alguns segundos parado, anda em 6 quadros com braços e cauda balançando, agacha ao
-  aterrissar e muda de expressão — sorriso calmo e piscadas parado, boca aberta andando, olhos
+- **Unicórnio expressivo** (`src/animation.rs`): respira parado (8 quadros), bate a patinha
+  no chão depois de alguns segundos parado, trota em 6 quadros (patas em pares diagonais,
+  cauda balançando), salta com as dianteiras dobradas, agacha ao aterrissar e muda de
+  expressão — sorriso calmo e piscadas parado, boca aberta andando, olhos
   brilhando no ar e carinha "^^" ao pegar um coração.
 - Tolerância para mãos pequenas: dá para pular logo após sair de uma beira e o toque em
   espaço pouco antes de tocar o chão é lembrado.
@@ -109,11 +110,10 @@ A lógica não depende da janela: tudo em `level/`, `player`, `hearts`, `game`, 
 - **[macroquad](https://github.com/not-fl3/macroquad)**: biblioteca 2D madura e leve em Rust,
   sem dependências nativas no Windows/macOS; compila rápido e gera um executável pequeno.
   (Bevy seria pesado demais; SDL2/raylib exigiriam bibliotecas C.)
-- **Arte e som gerados no código**: cabeça do unicórnio desenhada em ASCII e corpo, pernas,
-  braços e cauda gerados por ângulos (`src/art/unicorn.rs`), desenhados em camadas com
-  contorno próprio (corpo, braço de trás, cabeça, braço da frente); coração pela curva
-  clássica do coração; céu,
-  sol, nuvens, arco-íris, árvores e texturas do chão gerados por funções, sons sintetizados.
+- **Arte e som gerados no código**: cabeça do unicórnio desenhada em ASCII e corpo, patas e
+  cauda gerados por ângulos (`src/art/unicorn.rs`), em duas camadas com contorno próprio
+  (corpo e cabeça, uma por expressão); as patas do lado de lá ficam atrás do corpo, num tom
+  mais escuro; coração pela curva clássica do coração; céu, sol, nuvens, arco-íris, árvores e texturas do chão gerados por funções, sons sintetizados.
   Resultado: um único executável, sem pasta de assets nem licenças de terceiros.
 - **Pixel art nítida**: tudo é desenhado numa tela virtual de 640x360 e ampliado com filtro
   "nearest" (escala inteira sempre que possível: 2x em 720p, 3x em 1080p, 4x em 1440p);
