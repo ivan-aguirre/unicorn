@@ -1,12 +1,13 @@
 # Unicórnio
 
 Jogo de plataforma para crianças pequenas. Não há como perder:
-é só ajudar o unicórinio a juntar corações — a cada 100, tem festa e a contagem recomeça do zero.
+é só ajudar o unicórnio a juntar corações — a cada 100, tem festa e a contagem recomeça do zero.
 
 ## Disclaimer
 
 - Este código foi todo gerado por IA.
-- Fique a vontade para fazer fork, alterar e distribuir.
+- Fique à vontade para fazer fork, alterar e distribuir.
+- Não é permitida distribuição comercial (veja os detalhes da [licença](LICENSE.md)).
 - Se for distribuir, por favor mencione este repo como sendo o original.
 - Este jogo foi construído e testado no Linux Omarchy 4.5.0-3.
 - Este jogo não foi testado em Windows.
@@ -46,3 +47,8 @@ cargo run --release
   MinGW-w64 e rodar `cargo build --release --target x86_64-pc-windows-gnu`.
 
 Detalhes técnicos (arquitetura, qualidade, decisões) em [DESENVOLVIMENTO.md](DESENVOLVIMENTO.md).
+
+## Licença
+
+[PolyForm Noncommercial 1.0.0](LICENSE.md): pode usar, alterar e distribuir para fins não
+comerciais, mantendo o aviso de autoria (`Required Notice`) do arquivo de licença.

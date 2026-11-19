@@ -5,7 +5,7 @@ edition = "2024"
 rust-version = "1.99"
 publish = false
 description = "Jogo de plataforma para crianças pequenas: um unicórnio fofo coleta corações."
-license = "UNLICENSED"
+license = "PolyForm-Noncommercial-1.0.0"
 
 [dependencies]
 fastrand = "2.5.0"
