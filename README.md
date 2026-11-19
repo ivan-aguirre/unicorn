@@ -32,6 +32,11 @@ Não há como perder: o objetivo é só explorar e juntar corações.
   cauda balançando), salta com as dianteiras dobradas, agacha ao aterrissar e muda de
   expressão — sorriso calmo e piscadas parado, boca aberta andando, olhos
   brilhando no ar e carinha "^^" ao pegar um coração.
+- **Cenário vivo** (`src/ambient.rs` + `src/render/ambient.rs`): bandos de pássaros em "V",
+  borboletas voando em "oito" sobre as flores, peixinhos pulando no lago (com respingo e
+  ondinhas), brilhos piscando na água e no arco-íris, cachoeiras com três faixas de água,
+  espuma pulando e névoa, árvores balançando com o vento, pétalas caindo das cerejeiras,
+  sol com raios girando e nuvens flutuando. Tudo é função do tempo, sem estado: leve.
 - Tolerância para mãos pequenas: dá para pular logo após sair de uma beira e o toque em
   espaço pouco antes de tocar o chão é lembrado.
 
@@ -91,6 +96,7 @@ src/
   game.rs       estado do jogo e um passo de simulação (pausa, corações, festa)
   player.rs     física do unicórnio (andar, pular, rampas, plataformas)
   animation.rs  pose do corpo e expressão do rosto a partir do movimento
+  ambient.rs    trajetórias da vida no cenário (pássaros, peixes, borboletas, pétalas)
   hearts.rs     corações: distribuição, coleta, reaparecimento e o contador até 100
   level/        nível determinístico: terreno, plataformas e cenário com paralaxe
   effects.rs    partículas (brilhos e festa)

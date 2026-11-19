@@ -1,5 +1,6 @@
 //! Desenho: tudo vai para uma tela virtual pequena (pixel art), ampliada na janela no fim.
 
+pub mod ambient;
 pub mod hud;
 pub mod scene;
 pub mod textures;

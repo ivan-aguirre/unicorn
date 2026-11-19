@@ -83,12 +83,15 @@ fn heart_color(u: f32, v: f32) -> Rgba {
     }
 }
 
-/// Sol sorridente com raios; `frame` gira os raios meio passo (cintilar).
+/// Quadros da rotação dos raios do sol (um oitavo de volta entre raios, em passos suaves).
+pub const SUN_FRAMES: u8 = 8;
+
+/// Sol sorridente com raios; `frame` (0 a 7) gira os raios suavemente.
 #[must_use]
 pub fn sun(frame: u8) -> Pixmap {
     let mut p = Pixmap::new(72, 72);
     let center = (36.0, 36.0);
-    let turn = f32::from(frame % 2) * std::f32::consts::FRAC_PI_8;
+    let turn = f32::from(frame % SUN_FRAMES) / f32::from(SUN_FRAMES) * std::f32::consts::FRAC_PI_4;
     for (x, y) in p.coords() {
         let (dx, dy) = (f32::from(x) + 0.5 - center.0, f32::from(y) + 0.5 - center.1);
         let d = dx.hypot(dy);
@@ -207,28 +210,36 @@ pub fn cloud(kind: usize) -> Pixmap {
     p.outlined(rgb(0xb8_dc_ff))
 }
 
+/// Árvore em duas camadas do mesmo tamanho: tronco e copa (a copa balança com o vento).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Tree {
+    pub trunk: Pixmap,
+    pub crown: Pixmap,
+}
+
 /// Árvore redonda; `blossom` faz a versão de flores cor-de-rosa.
 #[must_use]
-pub fn tree(blossom: bool) -> Pixmap {
-    let mut p = Pixmap::new(56, 84);
-    fill(&mut p, (24, 46), (33, 82), rgb(0x9a_63_30));
-    fill(&mut p, (29, 50), (31, 80), rgb(0x7a_4a_22));
+pub fn tree(blossom: bool) -> Tree {
+    let mut trunk = Pixmap::new(56, 84);
+    fill(&mut trunk, (24, 40), (33, 82), rgb(0x9a_63_30));
+    fill(&mut trunk, (29, 44), (31, 80), rgb(0x7a_4a_22));
     let (base, light, dark, outline) = if blossom {
         (0xff_b3_d9, 0xff_dc_ee, 0xf0_86_bd, 0xa8_4a_7c)
     } else {
         (0x4f_bf_45, 0x8b_e0_6a, 0x35_96_3a, 0x1f_5e_2a)
     };
-    let crown = [
+    let mut crown = Pixmap::new(56, 84);
+    let puffs = [
         ((28.0, 25.0), 18.0),
         ((15.0, 37.0), 12.5),
         ((42.0, 37.0), 12.5),
         ((28.0, 42.0), 13.0),
     ];
-    for (c, r) in crown {
-        disc(&mut p, c, r, rgb(base));
+    for (c, r) in puffs {
+        disc(&mut crown, c, r, rgb(base));
     }
     shade(
-        &mut p,
+        &mut crown,
         rgb(base),
         (rgb(light), rgb(dark)),
         (28.0, 30.0),
@@ -245,11 +256,25 @@ pub fn tree(blossom: bool) -> Pixmap {
             (36, 44),
         ];
         for (x, y) in petals {
-            p.set(x, y, rgb(0xff_ff_ff));
-            p.set(x + 1, y, rgb(0xff_ff_ff));
+            crown.set(x, y, rgb(0xff_ff_ff));
+            crown.set(x + 1, y, rgb(0xff_ff_ff));
         }
     }
-    p.outlined(rgb(outline))
+    Tree {
+        trunk: trunk.outlined(rgb(0x5a_34_14)),
+        crown: crown.outlined(rgb(outline)),
+    }
+}
+
+/// Pétala de flor de cerejeira, caindo.
+#[must_use]
+pub fn petal() -> Pixmap {
+    let mut p = Pixmap::new(3, 3);
+    for (x, y) in [(1, 0), (0, 1), (1, 1), (2, 1), (1, 2)] {
+        p.set(x, y, rgb(0xff_c6_e2));
+    }
+    p.set(1, 1, rgb(0xff_9c_cf));
+    p
 }
 
 /// Arbusto baixo.
@@ -339,8 +364,9 @@ mod tests {
             cloud(0),
             cloud(1),
             cloud(2),
-            tree(false),
-            tree(true),
+            tree(false).crown,
+            tree(true).crown,
+            tree(false).trunk,
             bush(),
         ];
         for p in all {
@@ -376,8 +402,22 @@ mod tests {
     }
 
     #[test]
-    fn raios_do_sol_giram_entre_quadros() {
-        assert_ne!(sun(0), sun(1));
+    fn raios_do_sol_giram_suavemente_e_fecham_o_ciclo() {
+        let frames: Vec<Pixmap> = (0..SUN_FRAMES).map(sun).collect();
+        assert!(frames.windows(2).all(|w| w[0] != w[1]));
+        assert_eq!(sun(SUN_FRAMES), frames[0]);
+    }
+
+    #[test]
+    fn tronco_e_copa_se_encaixam() {
+        let t = tree(true);
+        assert_eq!(
+            (t.trunk.width(), t.trunk.height()),
+            (t.crown.width(), t.crown.height())
+        );
+        // O topo do tronco fica escondido sob a copa.
+        assert!(t.crown.is_opaque(28, 42) && t.trunk.is_opaque(28, 42));
+        assert!(petal().is_opaque(1, 1));
     }
 
     #[test]

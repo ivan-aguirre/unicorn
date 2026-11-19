@@ -4,11 +4,11 @@ use fastrand::Rng;
 use macroquad::math::Vec2;
 
 /// Ponto mais alto que o chão pode alcançar (menor `y`).
-pub const GROUND_TOP: f32 = 220.0;
+pub const GROUND_TOP: f32 = 276.0;
 /// Ponto mais baixo que o chão pode alcançar (maior `y`).
-pub const GROUND_BOTTOM: f32 = 306.0;
+pub const GROUND_BOTTOM: f32 = 336.0;
 /// Altura do chão no começo e no fim do nível.
-const BASE_Y: f32 = 280.0;
+const BASE_Y: f32 = 324.0;
 /// Trecho plano no início, onde o unicórnio aparece.
 const FLAT_START: u16 = 752;
 /// Trecho plano no fim do nível.

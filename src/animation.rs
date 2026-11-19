@@ -198,7 +198,8 @@ impl Animator {
 }
 
 /// Quadro de uma animação em laço de `frames` quadros de `frame_time` segundos.
-fn frame_at(clock: f32, frame_time: f32, frames: u8) -> u8 {
+#[must_use]
+pub fn frame_at(clock: f32, frame_time: f32, frames: u8) -> u8 {
     let phase = clock.rem_euclid(frame_time * f32::from(frames));
     (1..frames)
         .take_while(|k| phase >= frame_time * f32::from(*k))

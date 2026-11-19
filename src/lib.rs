@@ -4,6 +4,7 @@
 //! coletando corações. A lógica (nível, física, corações, efeitos) é pura e testada sem
 //! janela; `render`, `audio` e `app` fazem a ligação com o macroquad.
 
+pub mod ambient;
 pub mod animation;
 pub mod app;
 pub mod art;

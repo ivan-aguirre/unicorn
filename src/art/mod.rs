@@ -26,11 +26,13 @@ pub struct Art {
     pub sparkle: Pixmap,
     /// Flores rosa, amarela e roxa, dois quadros cada.
     pub flowers: [[Pixmap; 2]; 3],
-    pub tree: Pixmap,
-    pub blossom: Pixmap,
+    pub tree: procedural::Tree,
+    pub blossom: procedural::Tree,
     pub bush: Pixmap,
     pub clouds: [Pixmap; 3],
-    pub sun: [Pixmap; 2],
+    /// Sol com os raios girando, [`procedural::SUN_FRAMES`] quadros.
+    pub sun: Vec<Pixmap>,
+    pub critters: Critters,
     pub rainbow: Pixmap,
     pub soil: Pixmap,
     pub grass: Pixmap,
@@ -53,9 +55,9 @@ impl Art {
             star: sprite(sprites::STAR)?,
             sparkle: Pixmap::from_ascii(sprites::SPARKLE, PALETTE)?,
             flowers: [
-                flower(FlowerColor::Pink)?,
-                flower(FlowerColor::Yellow)?,
-                flower(FlowerColor::Purple)?,
+                recolored_pair(sprites::FLOWER, flower_colors(FlowerColor::Pink))?,
+                recolored_pair(sprites::FLOWER, flower_colors(FlowerColor::Yellow))?,
+                recolored_pair(sprites::FLOWER, flower_colors(FlowerColor::Purple))?,
             ],
             tree: procedural::tree(false),
             blossom: procedural::tree(true),
@@ -65,7 +67,8 @@ impl Art {
                 procedural::cloud(1),
                 procedural::cloud(2),
             ],
-            sun: [procedural::sun(0), procedural::sun(1)],
+            sun: (0..procedural::SUN_FRAMES).map(procedural::sun).collect(),
+            critters: Critters::build()?,
             rainbow: procedural::rainbow(),
             soil: procedural::soil(),
             grass: procedural::grass(),
@@ -103,21 +106,54 @@ pub fn icon(head: &Pixmap, size: u16) -> Vec<u8> {
     out.bytes().to_vec()
 }
 
-fn flower(color: FlowerColor) -> Result<[Pixmap; 2], ArtError> {
-    let (petal, center) = match color {
+/// Bichinhos do cenário.
+#[derive(Debug, Clone)]
+pub struct Critters {
+    /// Asas para cima e para baixo.
+    pub bird: [Pixmap; 2],
+    /// Rosa, amarela e azul; asas abertas e fechadas.
+    pub butterflies: [[Pixmap; 2]; 3],
+    pub fish: Pixmap,
+    pub petal: Pixmap,
+}
+
+impl Critters {
+    fn build() -> Result<Self, ArtError> {
+        let plain = |rows: &[&str]| Pixmap::from_ascii(rows, PALETTE);
+        let wings = |petal: u32, spot: u32| recolored_pair(sprites::BUTTERFLY, (petal, spot));
+        Ok(Self {
+            bird: [plain(sprites::BIRD[0])?, plain(sprites::BIRD[1])?],
+            butterflies: [
+                wings(0xff_8c_cf, 0xff_e1_4d)?,
+                wings(0xff_e1_4d, 0xf0_8a_3a)?,
+                wings(0x7e_c8_ff, 0xff_ff_ff)?,
+            ],
+            fish: plain(sprites::FISH)?.outlined(rgb(OUTLINE)),
+            petal: procedural::petal(),
+        })
+    }
+}
+
+/// Cores de pétala e miolo de cada flor.
+const fn flower_colors(color: FlowerColor) -> (u32, u32) {
+    match color {
         FlowerColor::Pink => (0xff_8c_cf, 0xff_e1_4d),
         FlowerColor::Yellow => (0xff_e1_4d, 0xf0_8a_3a),
         FlowerColor::Purple => (0xb9_8c_ff, 0xff_f3_a8),
-    };
-    let swaps = [
-        (rgb(0xff_8c_cf), rgb(petal)),
-        (rgb(0xff_e1_4d), rgb(center)),
-    ];
+    }
+}
+
+/// Dois quadros com as cores `P`/`p` da paleta trocadas por `(main, detail)`, contornados.
+fn recolored_pair(
+    frames: [&[&str]; 2],
+    (main, detail): (u32, u32),
+) -> Result<[Pixmap; 2], ArtError> {
+    let swaps = [(rgb(0xff_8c_cf), rgb(main)), (rgb(0xff_e1_4d), rgb(detail))];
     let frame = |rows: &[&str]| -> Result<Pixmap, ArtError> {
         let base = Pixmap::from_ascii(rows, PALETTE)?;
         Ok(base.recolored(&swaps).outlined(rgb(OUTLINE)))
     };
-    Ok([frame(sprites::FLOWER[0])?, frame(sprites::FLOWER[1])?])
+    Ok([frame(frames[0])?, frame(frames[1])?])
 }
 
 #[cfg(test)]
@@ -155,5 +191,12 @@ mod tests {
         assert_ne!(art.flowers[0][0], art.flowers[1][0]);
         assert_ne!(art.flowers[1][0], art.flowers[2][0]);
         assert_ne!(art.flowers[0][0], art.flowers[0][1], "a flor balança");
+        let wings = &art.critters.butterflies;
+        assert_ne!(wings[0][0], wings[1][0], "borboletas de cores diferentes");
+        assert_ne!(wings[0][0], wings[0][1], "a borboleta bate as asas");
+        assert_ne!(
+            art.critters.bird[0], art.critters.bird[1],
+            "o pássaro bate as asas"
+        );
     }
 }

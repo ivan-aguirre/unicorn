@@ -4,11 +4,27 @@ use macroquad::texture::{FilterMode, Texture2D, build_textures_atlas};
 
 use crate::art::Art;
 use crate::art::pixmap::Pixmap;
+use crate::art::procedural::Tree;
 
 /// Camadas de um quadro do unicórnio na GPU.
 pub struct UnicornFrame {
     pub body: Texture2D,
     pub head_drop: f32,
+}
+
+/// Tronco e copa de uma árvore.
+pub struct TreeTextures {
+    pub trunk: Texture2D,
+    pub crown: Texture2D,
+}
+
+impl TreeTextures {
+    fn upload(tree: &Tree) -> Self {
+        Self {
+            trunk: texture(&tree.trunk),
+            crown: texture(&tree.crown),
+        }
+    }
 }
 
 /// Texturas do jogo, espelhando [`Art`].
@@ -20,11 +36,15 @@ pub struct Textures {
     pub star: Texture2D,
     pub sparkle: Texture2D,
     pub flowers: [[Texture2D; 2]; 3],
-    pub tree: Texture2D,
-    pub blossom: Texture2D,
+    pub tree: TreeTextures,
+    pub blossom: TreeTextures,
     pub bush: Texture2D,
     pub clouds: [Texture2D; 3],
-    pub sun: [Texture2D; 2],
+    pub sun: Vec<Texture2D>,
+    pub bird: [Texture2D; 2],
+    pub butterflies: [[Texture2D; 2]; 3],
+    pub fish: Texture2D,
+    pub petal: Texture2D,
     pub rainbow: Texture2D,
     pub soil: Texture2D,
     pub grass: Texture2D,
@@ -55,15 +75,23 @@ impl Textures {
                 pair(&art.flowers[1]),
                 pair(&art.flowers[2]),
             ],
-            tree: texture(&art.tree),
-            blossom: texture(&art.blossom),
+            tree: TreeTextures::upload(&art.tree),
+            blossom: TreeTextures::upload(&art.blossom),
             bush: texture(&art.bush),
             clouds: [
                 texture(&art.clouds[0]),
                 texture(&art.clouds[1]),
                 texture(&art.clouds[2]),
             ],
-            sun: pair(&art.sun),
+            sun: art.sun.iter().map(texture).collect(),
+            bird: pair(&art.critters.bird),
+            butterflies: [
+                pair(&art.critters.butterflies[0]),
+                pair(&art.critters.butterflies[1]),
+                pair(&art.critters.butterflies[2]),
+            ],
+            fish: texture(&art.critters.fish),
+            petal: texture(&art.critters.petal),
             rainbow: texture(&art.rainbow),
             soil: texture(&art.soil),
             grass: texture(&art.grass),

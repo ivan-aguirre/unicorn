@@ -43,6 +43,13 @@ async fn main() {
         save(&renderer, &format!("{dir}/cena_{i}.png"));
     }
 
+    // Sequência da mesma cena, para ver as animações do cenário em movimento.
+    teleport(&mut game, 9000.0);
+    for i in 0..6 {
+        settle(&mut game, &renderer, Input::default(), 9).await;
+        save(&renderer, &format!("{dir}/sequencia_{i}.png"));
+    }
+
     teleport(&mut game, 4300.0);
     game.effects.celebrate(game.camera.x, unicorn::view::VIEW_W);
     settle(&mut game, &renderer, Input::default(), 50).await;

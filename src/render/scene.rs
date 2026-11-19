@@ -7,25 +7,29 @@ use macroquad::math::{Rect, Vec2};
 use macroquad::shapes::draw_rectangle;
 use macroquad::texture::{DrawTextureParams, Texture2D, draw_texture, draw_texture_ex};
 
+use super::ambient;
 use super::textures::Textures;
+use crate::ambient as ambient_motion;
+use crate::animation::frame_at;
 use crate::art::flower_index;
+use crate::art::procedural::SUN_FRAMES;
 use crate::art::procedural::{GRASS_TIP, GROUND_TILE};
 use crate::art::unicorn::{FEET, FRAME_W, HEAD_AT};
 use crate::effects::ParticleKind;
 use crate::game::Game;
 use crate::level::platform::THICKNESS;
 use crate::level::scenery::{
-    CLOUD_LAYERS, CLOUD_PERIOD, FAR_PARALLAX, FlowerColor, MESA_PARALLAX, Mesa, Parallax, PropKind,
-    RAINBOW_PARALLAX,
+    CLOUD_LAYERS, CLOUD_PERIOD, FAR_PARALLAX, FlowerColor, MESA_PARALLAX, Mesa, Parallax, Prop,
+    PropKind, RAINBOW_PARALLAX,
 };
 use crate::level::{Level, span};
 use crate::player::Facing;
 use crate::view::{VIEW_H, VIEW_H_PX, VIEW_W, VIEW_W_PX};
 
 /// Linha do horizonte (onde começa o mar).
-const SEA_Y: f32 = 206.0;
+pub const SEA_Y: f32 = 206.0;
 /// Base das colinas do fundo (dentro do lago).
-const MESA_BASE: f32 = 250.0;
+pub const MESA_BASE: f32 = 250.0;
 /// Faixas do céu: (topo, base, cor).
 const SKY: [(f32, f32, u32); 5] = [
     (0.0, 40.0, 0x3a_78_d8),
@@ -62,7 +66,7 @@ fn columns(step: usize) -> impl Iterator<Item = f32> {
 }
 
 /// Deslocamentos `0, step, 2*step, ...` menores que `limit` (até a altura da tela).
-fn offsets(step: usize, limit: f32) -> impl Iterator<Item = f32> {
+pub fn offsets(step: usize, limit: f32) -> impl Iterator<Item = f32> {
     (0..VIEW_H_PX)
         .step_by(step)
         .map(f32::from)
@@ -77,14 +81,16 @@ pub fn draw(tex: &Textures, game: &Game) {
     };
     draw_sky(tex, view);
     draw_clouds(tex, game, view, 0);
+    ambient::draw_birds(tex, view.cam, view.time);
     draw_far(view);
+    ambient::draw_fish(tex, view.cam, view.time);
     draw_rainbows(tex, game, view);
     draw_clouds(tex, game, view, 1);
     draw_mesas(game, view);
-    draw_props(tex, &game.level, view, true);
+    draw_trees(tex, &game.level, view);
     draw_ground(tex, &game.level, view);
     draw_platforms(tex, &game.level, view);
-    draw_props(tex, &game.level, view, false);
+    draw_plants(tex, &game.level, view);
     draw_hearts(tex, game, view);
     draw_player(tex, game, view);
     draw_particles(tex, game, view);
@@ -94,8 +100,8 @@ fn draw_sky(tex: &Textures, view: View) {
     for (top, bottom, hex) in SKY {
         draw_rectangle(0.0, top, VIEW_W, bottom - top, color(hex));
     }
-    let frame = usize::from((view.time * 2.0).rem_euclid(2.0) >= 1.0);
-    if let Some(sun) = tex.sun.get(frame) {
+    let frame = frame_at(view.time, 0.14, SUN_FRAMES);
+    if let Some(sun) = tex.sun.get(usize::from(frame)) {
         draw_texture(sun, VIEW_W - 100.0, -4.0, WHITE);
     }
 }
@@ -110,8 +116,9 @@ fn draw_clouds(tex: &Textures, game: &Game, view: View, layer: usize) {
     for c in clouds {
         let moved = view.cam.mul_add(layer.parallax, view.time * layer.drift);
         let x = (c.x - moved).rem_euclid(CLOUD_PERIOD) - 120.0;
+        let bob = view.time.mul_add(0.5, c.x).sin().round();
         if let Some(t) = tex.clouds.get(c.kind).filter(|_| x < VIEW_W) {
-            draw_texture(t, x.round(), c.y, WHITE);
+            draw_texture(t, x.round(), c.y + bob, WHITE);
         }
     }
 }
@@ -133,6 +140,7 @@ fn draw_far(view: View) {
     draw_rectangle(0.0, SEA_Y, VIEW_W, VIEW_H - SEA_Y, color(0x3f_86_e0));
     draw_rectangle(0.0, SEA_Y, VIEW_W, 3.0, color(0x9f_d4_ff));
     draw_sea_shimmer(view, offset);
+    ambient::draw_glints(view.cam, view.time);
 }
 
 fn draw_sea_shimmer(view: View, offset: f32) {
@@ -165,6 +173,7 @@ fn draw_rainbows(tex: &Textures, game: &Game, view: View) {
     ) {
         let sx = x - left;
         draw_texture(&tex.rainbow, sx, SEA_Y - tex.rainbow.height() + 3.0, WHITE);
+        ambient::draw_rainbow_sparkles(tex, sx, view.time);
         if let Some(puff) = tex.clouds.get(1) {
             draw_texture(puff, sx - 20.0, SEA_Y - 23.0, WHITE);
             draw_texture(puff, sx + width - 37.0, SEA_Y - 23.0, WHITE);
@@ -183,7 +192,7 @@ fn draw_mesas(game: &Game, view: View) {
         let sx = m.x - left;
         draw_mesa(m, sx);
         if let Some(w) = m.waterfall {
-            draw_waterfall(sx + w.offset, w.w, m.top, view.time);
+            ambient::draw_waterfall(sx + w.offset, w.w, m.top, view.time);
         }
     }
 }
@@ -211,49 +220,60 @@ fn draw_mesa(m: &Mesa, sx: f32) {
     draw_rectangle(sx, top + 8.0, m.w, 3.0, color(0x2f_7a_52));
 }
 
-/// Cachoeira com faixas de espuma descendo e respingos na base.
-fn draw_waterfall(left: f32, width: f32, top: f32, time: f32) {
-    let height = MESA_BASE - top;
-    let edge = color(0x5f_b8_f0);
-    draw_rectangle(left, top, width, height, color(0x8f_d6_ff));
-    draw_rectangle(left, top, 2.0, height, edge);
-    draw_rectangle(left + width - 2.0, top, 2.0, height, edge);
-    let foam = color(0xff_ff_ff);
-    for offset in offsets(14, height) {
-        let streak = top + time.mul_add(80.0, offset).rem_euclid(height);
-        draw_rectangle(left + 3.0, streak.round(), width - 6.0, 3.0, foam);
-    }
-    draw_rectangle(left - 2.0, top - 2.0, width + 4.0, 3.0, foam);
-    let splash = if (time * 6.0).rem_euclid(2.0) < 1.0 {
-        0.0
-    } else {
-        2.0
-    };
-    draw_rectangle(left - 5.0 + splash, MESA_BASE - 5.0, width + 7.0, 6.0, foam);
-}
-
-/// Enfeites do chão: árvores atrás do chão (`behind`) ou arbustos e flores na frente.
-fn draw_props(tex: &Textures, level: &Level, view: View, behind: bool) {
-    for p in span(
+/// Enfeites do chão visíveis (com margem para os que entram pela borda).
+fn visible_props(level: &Level, view: View) -> &[Prop] {
+    span(
         &level.scenery.props,
         |p| p.x,
         view.cam - 60.0,
         view.cam + VIEW_W + 60.0,
-    ) {
-        let ground = level.terrain.height_at(p.x).round();
-        let x = p.x - view.cam;
-        let sprite = match p.kind {
-            PropKind::Tree if behind => Some((&tex.tree, 6.0)),
-            PropKind::BlossomTree if behind => Some((&tex.blossom, 6.0)),
-            PropKind::Bush if !behind => Some((&tex.bush, 4.0)),
-            PropKind::Flower(c) if !behind => Some((flower(tex, c, p.x, view.time), 3.0)),
-            _ => None,
+    )
+}
+
+/// Canto superior esquerdo de um sprite plantado em `x`, afundando `sink` pixels no chão.
+fn planted(t: &Texture2D, x: f32, ground: f32, sink: f32) -> Vec2 {
+    Vec2::new(x - (t.width() / 2.0).floor(), ground - t.height() + sink)
+}
+
+/// Árvores atrás do chão: tronco parado e copa balançando com o vento; as floridas soltam
+/// pétalas.
+fn draw_trees(tex: &Textures, level: &Level, view: View) {
+    for p in visible_props(level, view) {
+        let tree = match p.kind {
+            PropKind::Tree => &tex.tree,
+            PropKind::BlossomTree => &tex.blossom,
+            PropKind::Bush | PropKind::Flower(_) => continue,
         };
-        // Plantado: centralizado em `x`, afundando `sink` pixels no chão.
-        if let Some((t, sink)) = sprite {
-            let at = Vec2::new(x - (t.width() / 2.0).floor(), ground - t.height() + sink);
-            draw_texture(t, at.x, at.y, WHITE);
+        let ground = level.terrain.height_at(p.x).round();
+        let at = planted(&tree.trunk, p.x - view.cam, ground, 6.0);
+        draw_texture(&tree.trunk, at.x, at.y, WHITE);
+        let sway = ambient_motion::sway(p.x, view.time);
+        draw_texture(&tree.crown, at.x + sway, at.y, WHITE);
+        if p.kind == PropKind::BlossomTree {
+            let crown = at + Vec2::new(tree.crown.width() / 2.0 + sway, 34.0);
+            ambient::draw_petals(tex, crown, view.time);
         }
+    }
+}
+
+/// Arbustos e flores na frente do chão; algumas flores têm uma borboleta voando em cima.
+fn draw_plants(tex: &Textures, level: &Level, view: View) {
+    let mut butterflies = Vec::new();
+    for p in visible_props(level, view) {
+        let (t, sink) = match p.kind {
+            PropKind::Bush => (&tex.bush, 4.0),
+            PropKind::Flower(c) => (flower(tex, c, p.x, view.time), 3.0),
+            PropKind::Tree | PropKind::BlossomTree => continue,
+        };
+        let ground = level.terrain.height_at(p.x).round();
+        let at = planted(t, p.x - view.cam, ground, sink);
+        draw_texture(t, at.x, at.y, WHITE);
+        if matches!(p.kind, PropKind::Flower(_)) && ambient_motion::has_butterfly(p.x) {
+            butterflies.push((Vec2::new(p.x - view.cam, ground), p.x));
+        }
+    }
+    for (flower_at, world_x) in butterflies {
+        ambient::draw_butterfly(tex, flower_at, world_x, view.time);
     }
 }
 

@@ -23,6 +23,11 @@ pub const PALETTE: &Palette = &[
     // Estrela e brilho
     (b'S', 0xff_e1_4d),
     (b's', 0xf5_b8_2e),
+    // Bichinhos: pássaro, corpo da borboleta, peixe
+    (b'b', 0x3d_4f_7a),
+    (b'k', 0x4b_3b_63),
+    (b'O', 0xff_9a_3c),
+    (b'Q', 0xff_d2_9a),
     // Plantas
     (b'F', 0x3a_a2_4a),
     (b'P', 0xff_8c_cf),
@@ -99,6 +104,58 @@ pub const FLOWER: [&[&str]; 2] = [
         ".....F.....",
         ".....F.....",
     ],
+];
+
+/// Pássaro ao longe (asas para cima e para baixo; sem contorno). 9x4.
+#[rustfmt::skip]
+pub const BIRD: [&[&str]; 2] = [
+    &[
+        "bb.....bb",
+        "..b...b..",
+        "...bbb...",
+        ".........",
+    ],
+    &[
+        ".........",
+        "...bbb...",
+        "..b...b..",
+        ".b.....b.",
+    ],
+];
+
+/// Borboleta (asas abertas e fechadas). Asas `P`, pintinhas `p`, corpo `k`. 11x8.
+#[rustfmt::skip]
+pub const BUTTERFLY: [&[&str]; 2] = [
+    &[
+        "..PP...PP..",
+        ".PPPP.PPPP.",
+        "PPpPPkPPpPP",
+        "PPPPPkPPPPP",
+        ".PPPPkPPPP.",
+        "..PPPkPPP..",
+        ".PPP.k.PPP.",
+        "..P.....P..",
+    ],
+    &[
+        "....P.P....",
+        "...PP.PP...",
+        "...PPkPP...",
+        "..PPPkPPP..",
+        "...PPkPP...",
+        "....PkP....",
+        "....PkP....",
+        ".....k.....",
+    ],
+];
+
+/// Peixinho do lago, nadando para a direita. 9x5.
+#[rustfmt::skip]
+pub const FISH: &[&str] = &[
+    "...OOO...",
+    "..OOOOO.O",
+    ".WEOOOOOO",
+    "OOQQQOO.O",
+    "..OOOO...",
 ];
 
 /// Dígitos e as letras usadas nos avisos, em fonte 5x7 (branca; a sombra vem depois).
@@ -284,7 +341,17 @@ mod tests {
 
     #[test]
     fn todos_os_sprites_sao_validos() {
-        let mut all: Vec<&[&str]> = vec![STAR, SPARKLE, FLOWER[0], FLOWER[1]];
+        let mut all: Vec<&[&str]> = vec![
+            STAR,
+            SPARKLE,
+            FLOWER[0],
+            FLOWER[1],
+            BIRD[0],
+            BIRD[1],
+            BUTTERFLY[0],
+            BUTTERFLY[1],
+            FISH,
+        ];
         all.extend(GLYPHS.iter().map(|(_, g)| *g));
         for rows in all {
             assert!(
