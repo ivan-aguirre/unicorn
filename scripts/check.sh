@@ -1,5 +1,5 @@
 #!/bin/sh
-# Verificações de qualidade. Usado pelo hook de pre-commit e pela CI.
+# Verificações de qualidade. Usado pelo hook de pre-commit.
 # Uso: scripts/check.sh            (formatação + linter + testes)
 #      scripts/check.sh --security (inclui auditoria de dependências)
 set -eu
