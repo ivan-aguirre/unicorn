@@ -104,9 +104,22 @@ pub fn sun(frame: u8) -> Pixmap {
     }
     disc(&mut p, center, 21.5, rgb(0xf7_a5_31));
     disc(&mut p, center, 20.0, rgb(0xff_e1_4d));
-    disc(&mut p, (30.0, 29.0), 8.0, rgb(0xff_f3_a8));
+    sun_shine(&mut p, center);
     sun_face(&mut p);
     p
+}
+
+/// Reflexo fininho na borda de cima, à esquerda (longe do rosto).
+fn sun_shine(p: &mut Pixmap, center: (f32, f32)) {
+    let light = rgb(0xff_f3_a8);
+    for (x, y) in p.coords() {
+        let (dx, dy) = (f32::from(x) + 0.5 - center.0, f32::from(y) + 0.5 - center.1);
+        let along_rim = (15.5..18.0).contains(&dx.hypot(dy));
+        let upper_left = (dy.atan2(dx) + 2.36).abs() < 0.5;
+        if along_rim && upper_left {
+            p.set(x, y, light);
+        }
+    }
 }
 
 /// Olhinhos fechados e felizes, bochechas e sorriso.
@@ -266,6 +279,62 @@ pub fn tree(blossom: bool) -> Tree {
     }
 }
 
+/// Quadros do passarinho: quatro batendo as asas e um planando.
+pub const BIRD_FRAMES: u8 = 5;
+/// Ângulo da asa em cada quadro (radianos; positivo = para cima).
+const BIRD_WINGS: [f32; 5] = [1.1, 0.3, -0.85, -0.15, 0.12];
+
+/// Passarinho azul de perfil (olhando para a direita): corpo gordinho, barriga creme, cauda
+/// de duas penas, bico laranja, olho e bochecha; a asa muda de quadro para quadro.
+#[must_use]
+pub fn bird(frame: u8) -> Pixmap {
+    let mut p = Pixmap::new(24, 22);
+    let (blue, dark, light) = (rgb(0x5a_a9_e6), rgb(0x3b_78_b8), rgb(0x9f_d4_f7));
+    feather(&mut p, (8.0, 13.0), (2.0, 10.0), 2.6, dark);
+    feather(&mut p, (8.0, 13.0), (2.5, 15.0), 2.4, dark);
+    for (x, y) in p.coords() {
+        let (fx, fy) = (f32::from(x) + 0.5, f32::from(y) + 0.5);
+        let body = ((fx - 11.0) / 6.0).hypot((fy - 13.5) / 4.2) <= 1.0;
+        let head = (fx - 16.0).hypot(fy - 10.0) <= 3.8;
+        if body || head {
+            let belly = fy > 14.0 && fx > 9.0;
+            p.set(x, y, if belly { rgb(0xff_f2_d6) } else { blue });
+        }
+    }
+    for (x, y) in [(20, 9), (21, 10), (20, 10), (19, 10), (20, 11)] {
+        p.set(x, y, rgb(0xff_a6_3c));
+    }
+    p.set(17, 9, rgb(0x2a_24_40));
+    p.set(16, 11, rgb(0xff_a3_c8));
+    let angle = BIRD_WINGS
+        .get(usize::from(frame % BIRD_FRAMES))
+        .copied()
+        .unwrap_or(0.0);
+    let tip = (
+        8.0f32.mul_add(-angle.cos(), 11.0),
+        8.0f32.mul_add(-angle.sin(), 12.0),
+    );
+    feather(&mut p, (11.5, 12.0), tip, 3.6, dark);
+    feather(&mut p, tip, tip, 1.6, light);
+    p.outlined(rgb(0x24_36_5c))
+}
+
+/// Pena (cápsula) de `from` a `to`.
+fn feather(p: &mut Pixmap, from: (f32, f32), to: (f32, f32), width: f32, color: Rgba) {
+    let (vx, vy) = (to.0 - from.0, to.1 - from.1);
+    let length = vx.hypot(vy).max(f32::EPSILON);
+    for (x, y) in p.coords() {
+        let (dx, dy) = (f32::from(x) + 0.5 - from.0, f32::from(y) + 0.5 - from.1);
+        let along = (dx.mul_add(vx, dy * vy) / length).clamp(0.0, length);
+        let gap = (vx / length)
+            .mul_add(-along, dx)
+            .hypot((vy / length).mul_add(-along, dy));
+        if gap <= width / 2.0 {
+            p.set(x, y, color);
+        }
+    }
+}
+
 /// Pétala de flor de cerejeira, caindo.
 #[must_use]
 pub fn petal() -> Pixmap {
@@ -406,6 +475,43 @@ mod tests {
         let frames: Vec<Pixmap> = (0..SUN_FRAMES).map(sun).collect();
         assert!(frames.windows(2).all(|w| w[0] != w[1]));
         assert_eq!(sun(SUN_FRAMES), frames[0]);
+    }
+
+    #[test]
+    fn sol_sem_mancha_perto_dos_olhos() {
+        let s = sun(0);
+        let shine = rgb(0xff_f3_a8);
+        // Nenhum pixel do reflexo na região dos olhos, bochechas e sorriso.
+        for y in 30..46 {
+            for x in 22..51 {
+                assert_ne!(s.get(x, y), Some(shine), "reflexo no rosto em ({x},{y})");
+            }
+        }
+        assert!(
+            s.coords().any(|(x, y)| s.get(x, y) == Some(shine)),
+            "o reflexo existe"
+        );
+    }
+
+    #[test]
+    fn passarinho_bate_as_asas() {
+        let frames: Vec<Pixmap> = (0..BIRD_FRAMES).map(bird).collect();
+        assert!(frames.windows(2).all(|w| w[0] != w[1]));
+        // Asa para cima passa do topo do corpo; asa para baixo passa da barriga.
+        let top = |p: &Pixmap| {
+            p.coords()
+                .filter(|(x, y)| p.is_opaque(*x, *y))
+                .map(|(_, y)| y)
+                .min()
+        };
+        let bottom = |p: &Pixmap| {
+            p.coords()
+                .filter(|(x, y)| p.is_opaque(*x, *y))
+                .map(|(_, y)| y)
+                .max()
+        };
+        assert!(top(&frames[0]) < top(&frames[2]));
+        assert!(bottom(&frames[2]) > bottom(&frames[0]));
     }
 
     #[test]

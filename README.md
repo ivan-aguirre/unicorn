@@ -32,7 +32,7 @@ Não há como perder: o objetivo é só explorar e juntar corações.
   cauda balançando), salta com as dianteiras dobradas, agacha ao aterrissar e muda de
   expressão — sorriso calmo e piscadas parado, boca aberta andando, olhos
   brilhando no ar e carinha "^^" ao pegar um coração.
-- **Cenário vivo** (`src/ambient.rs` + `src/render/ambient.rs`): bandos de pássaros em "V",
+- **Cenário vivo** (`src/ambient.rs` + `src/render/ambient.rs`): passarinhos azuis voando sozinhos ou em grupinhos (batendo as asas e planando),
   borboletas voando em "oito" sobre as flores, peixinhos pulando no lago (com respingo e
   ondinhas), brilhos piscando na água e no arco-íris, cachoeiras com três faixas de água,
   espuma pulando e névoa, árvores balançando com o vento, pétalas caindo das cerejeiras,

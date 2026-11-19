@@ -23,8 +23,7 @@ pub const PALETTE: &Palette = &[
     // Estrela e brilho
     (b'S', 0xff_e1_4d),
     (b's', 0xf5_b8_2e),
-    // Bichinhos: pássaro, corpo da borboleta, peixe
-    (b'b', 0x3d_4f_7a),
+    // Bichinhos: corpo da borboleta, peixe
     (b'k', 0x4b_3b_63),
     (b'O', 0xff_9a_3c),
     (b'Q', 0xff_d2_9a),
@@ -103,23 +102,6 @@ pub const FLOWER: [&[&str]; 2] = [
         ".....F.....",
         ".....F.....",
         ".....F.....",
-    ],
-];
-
-/// Pássaro ao longe (asas para cima e para baixo; sem contorno). 9x4.
-#[rustfmt::skip]
-pub const BIRD: [&[&str]; 2] = [
-    &[
-        "bb.....bb",
-        "..b...b..",
-        "...bbb...",
-        ".........",
-    ],
-    &[
-        ".........",
-        "...bbb...",
-        "..b...b..",
-        ".b.....b.",
     ],
 ];
 
@@ -346,8 +328,6 @@ mod tests {
             SPARKLE,
             FLOWER[0],
             FLOWER[1],
-            BIRD[0],
-            BIRD[1],
             BUTTERFLY[0],
             BUTTERFLY[1],
             FISH,

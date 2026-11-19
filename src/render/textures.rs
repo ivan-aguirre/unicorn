@@ -41,7 +41,7 @@ pub struct Textures {
     pub bush: Texture2D,
     pub clouds: [Texture2D; 3],
     pub sun: Vec<Texture2D>,
-    pub bird: [Texture2D; 2],
+    pub bird: Vec<Texture2D>,
     pub butterflies: [[Texture2D; 2]; 3],
     pub fish: Texture2D,
     pub petal: Texture2D,
@@ -84,7 +84,7 @@ impl Textures {
                 texture(&art.clouds[2]),
             ],
             sun: art.sun.iter().map(texture).collect(),
-            bird: pair(&art.critters.bird),
+            bird: art.critters.bird.iter().map(texture).collect(),
             butterflies: [
                 pair(&art.critters.butterflies[0]),
                 pair(&art.critters.butterflies[1]),

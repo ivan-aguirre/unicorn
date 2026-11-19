@@ -95,21 +95,72 @@ pub fn petal(crown: Vec2, i: u8, t: f32) -> (Vec2, f32) {
     (at, alpha)
 }
 
-/// Pássaro `k` do bando `flock`, na tela: posição e asa para cima. Bandos em "V".
+/// Voos de passarinhos no céu ao mesmo tempo.
+pub const FLIGHTS: u8 = 4;
+/// Quantos passarinhos em cada voo: sozinhos ou em grupinhos.
+const FLIGHT_SIZES: [u8; 4] = [1, 2, 1, 3];
+/// Ciclo de voo: bate as asas por um tempo e depois plana.
+const FLAP_CYCLE: f32 = 2.6;
+const FLAPPING: f32 = 1.2;
+const FLAP_FRAME_TIME: f32 = 0.1;
+/// Quadro de planar (depois dos 4 de bater as asas).
+pub const GLIDE_FRAME: u8 = 4;
+
+/// Quantos passarinhos há no voo `flight`.
 #[must_use]
-pub fn bird(flock: u8, k: u8, t: f32, cam: f32) -> (Vec2, bool) {
-    let group = f32::from(flock);
-    let speed = 6.0f32.mul_add(group, 18.0);
-    let travel = t.mul_add(speed, group.mul_add(470.0, -cam * SKY_PARALLAX));
-    let rank = f32::from(k.div_ceil(2));
-    let side: f32 = if k % 2 == 1 { -1.0 } else { 1.0 };
-    let glide = t.mul_add(0.8, group).sin() * 4.0;
-    let at = Vec2::new(
-        8.0f32.mul_add(-rank, travel.rem_euclid(SKY_LOOP) - 100.0),
-        (5.0 * side).mul_add(rank, 22.0f32.mul_add(group, 46.0) + glide),
-    );
-    let wing = t.mul_add(7.0, f32::from(k) * 1.3).sin() > 0.0;
-    (at, wing)
+pub fn flight_size(flight: u8) -> u8 {
+    FLIGHT_SIZES.get(usize::from(flight)).copied().unwrap_or(1)
+}
+
+/// Um passarinho na tela.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct BirdView {
+    /// Centro do passarinho.
+    pub at: Vec2,
+    /// Quadro da asa (0 a 3 batendo, 4 planando).
+    pub frame: u8,
+    pub facing_left: bool,
+}
+
+/// Passarinho `member` do voo `flight`: atravessa o céu (uns para a direita, outros para a
+/// esquerda), ondulando, batendo as asas e planando; os do grupinho vão um pouco atrás.
+#[must_use]
+pub fn bird(flight: u8, member: u8, t: f32, cam: f32) -> BirdView {
+    let (group, place) = (f32::from(flight), f32::from(member));
+    let rightward = flight.is_multiple_of(2);
+    let along = t
+        .mul_add(9.0f32.mul_add(group, 34.0), group * 610.0)
+        .rem_euclid(SKY_LOOP);
+    let heading = if rightward { along } else { SKY_LOOP - along };
+    let behind = 18.0f32.mul_add(place, 4.0 * t.mul_add(0.9, place).sin());
+    let lead_x = cam.mul_add(-SKY_PARALLAX, heading).rem_euclid(SKY_LOOP) - 120.0;
+    let side: f32 = match member % 3 {
+        0 => 0.0,
+        1 => -10.0,
+        _ => 9.0,
+    };
+    let bob = 2.0f32.mul_add(t.mul_add(1.4, place * 2.0).sin(), side);
+    let altitude = 8.0f32.mul_add(t.mul_add(0.6, group).sin(), 26.0f32.mul_add(group, 40.0));
+    let local = place
+        .mul_add(0.23, group.mul_add(0.7, t))
+        .rem_euclid(FLAP_CYCLE);
+    let frame = if local < FLAPPING {
+        crate::animation::frame_at(local, FLAP_FRAME_TIME, GLIDE_FRAME)
+    } else {
+        GLIDE_FRAME
+    };
+    BirdView {
+        at: Vec2::new(
+            if rightward {
+                lead_x - behind
+            } else {
+                lead_x + behind
+            },
+            altitude + bob,
+        ),
+        frame,
+        facing_left: !rightward,
+    }
 }
 
 /// Intensidade (0 a 1) de um brilho que pisca, com fases diferentes por `k`.
@@ -213,14 +264,39 @@ mod tests {
     }
 
     #[test]
-    fn passaros_voam_no_ceu_em_formacao() {
-        for t in times() {
-            let (leader, _) = bird(0, 0, t, 1234.0);
-            for k in 1..5 {
-                let (b, _) = bird(0, k, t, 1234.0);
-                assert!(b.y < 150.0, "pássaro baixo demais");
-                assert!(b.x <= leader.x + 1e-3 || b.x > leader.x + SKY_LOOP - 200.0);
-            }
+    fn passarinhos_voam_no_ceu_sozinhos_ou_em_grupinhos() {
+        assert!((0..FLIGHTS).all(|f| (1..=3).contains(&flight_size(f))));
+        assert!(
+            (0..FLIGHTS).any(|f| flight_size(f) == 1),
+            "há quem voe sozinho"
+        );
+        let all = times().flat_map(|t| {
+            (0..FLIGHTS).flat_map(move |f| (0..flight_size(f)).map(move |m| (t, f, m)))
+        });
+        for (t, flight, member) in all {
+            let leader = bird(flight, 0, t, 500.0);
+            let b = bird(flight, member, t, 500.0);
+            assert!(b.at.y > 20.0 && b.at.y < 160.0, "fora do céu");
+            assert!(b.frame <= GLIDE_FRAME);
+            let near = (b.at.x - leader.at.x).abs() < 60.0;
+            let wrapped = (b.at.x - leader.at.x).abs() > SKY_LOOP - 200.0;
+            assert!(near || wrapped, "o grupinho se desfez");
+        }
+    }
+
+    #[test]
+    fn passarinho_bate_as_asas_e_depois_plana() {
+        let frames: Vec<u8> = times().map(|t| bird(0, 0, t, 0.0).frame).collect();
+        assert!(frames.contains(&GLIDE_FRAME));
+        assert!((0..GLIDE_FRAME).all(|f| frames.contains(&f)));
+    }
+
+    #[test]
+    fn passarinho_olha_para_onde_voa() {
+        for flight in 0..FLIGHTS {
+            let (a, b) = (bird(flight, 0, 10.0, 0.0), bird(flight, 0, 10.1, 0.0));
+            let moving_left = b.at.x < a.at.x;
+            assert_eq!(a.facing_left, moving_left, "voo {flight}");
         }
     }
 

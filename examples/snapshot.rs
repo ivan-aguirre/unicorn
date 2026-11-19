@@ -102,6 +102,8 @@ fn sprite_sheet(art: &Art, path: &str) {
     let sprites: Vec<&Pixmap> = frames
         .iter()
         .chain([&art.heart, &art.star, &art.flowers[0][0], &art.bush])
+        .chain(art.critters.bird.iter())
+        .chain(art.sun.iter().take(1))
         .collect();
     let width = sprites.iter().map(|p| p.width() + 2).sum::<u16>() + 2;
     let height = sprites.iter().map(|p| p.height()).max().unwrap_or(1) + 4;

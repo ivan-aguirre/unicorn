@@ -8,13 +8,12 @@ use macroquad::texture::{DrawTextureParams, Texture2D, draw_texture_ex};
 
 use super::scene::{MESA_BASE, SEA_Y, color, draw_centered, offsets};
 use super::textures::Textures;
-use crate::ambient::{Fish, bird, butterfly, fish, fish_arc, fish_landing, petal, twinkle};
+use crate::ambient::{
+    FLIGHTS, Fish, bird, butterfly, fish, fish_arc, fish_landing, flight_size, petal, twinkle,
+};
 use crate::level::scenery::FAR_PARALLAX;
 use crate::view::{VIEW_H, VIEW_W};
 
-/// Bandos e pássaros por bando.
-const FLOCKS: u8 = 3;
-const BIRDS_PER_FLOCK: u8 = 5;
 /// Peixes no lago (um a cada `FISH_GAP` pixels da camada distante).
 const FISH_SLOTS: u16 = 24;
 const FISH_GAP: f32 = 330.0;
@@ -32,13 +31,17 @@ fn draw_at(t: &Texture2D, at: Vec2, params: DrawTextureParams) {
     draw_texture_ex(t, at.x.round(), at.y.round(), WHITE, params);
 }
 
-/// Bandos de pássaros em "V" atravessando o céu, batendo as asas.
+/// Passarinhos voando sozinhos ou em grupinhos, batendo as asas e planando.
 pub fn draw_birds(tex: &Textures, cam: f32, time: f32) {
-    for flock in 0..FLOCKS {
-        for k in 0..BIRDS_PER_FLOCK {
-            let (at, up) = bird(flock, k, time, cam);
-            if let Some(t) = tex.bird.get(usize::from(!up)) {
-                draw_at(t, at, DrawTextureParams::default());
+    for flight in 0..FLIGHTS {
+        for member in 0..flight_size(flight) {
+            let b = bird(flight, member, time, cam);
+            if let Some(t) = tex.bird.get(usize::from(b.frame)) {
+                let params = DrawTextureParams {
+                    flip_x: b.facing_left,
+                    ..Default::default()
+                };
+                draw_at(t, b.at - t.size() / 2.0, params);
             }
         }
     }

@@ -109,8 +109,8 @@ pub fn icon(head: &Pixmap, size: u16) -> Vec<u8> {
 /// Bichinhos do cenário.
 #[derive(Debug, Clone)]
 pub struct Critters {
-    /// Asas para cima e para baixo.
-    pub bird: [Pixmap; 2],
+    /// Passarinho: quatro quadros batendo as asas e um planando.
+    pub bird: Vec<Pixmap>,
     /// Rosa, amarela e azul; asas abertas e fechadas.
     pub butterflies: [[Pixmap; 2]; 3],
     pub fish: Pixmap,
@@ -122,7 +122,7 @@ impl Critters {
         let plain = |rows: &[&str]| Pixmap::from_ascii(rows, PALETTE);
         let wings = |petal: u32, spot: u32| recolored_pair(sprites::BUTTERFLY, (petal, spot));
         Ok(Self {
-            bird: [plain(sprites::BIRD[0])?, plain(sprites::BIRD[1])?],
+            bird: (0..procedural::BIRD_FRAMES).map(procedural::bird).collect(),
             butterflies: [
                 wings(0xff_8c_cf, 0xff_e1_4d)?,
                 wings(0xff_e1_4d, 0xf0_8a_3a)?,
@@ -194,9 +194,9 @@ mod tests {
         let wings = &art.critters.butterflies;
         assert_ne!(wings[0][0], wings[1][0], "borboletas de cores diferentes");
         assert_ne!(wings[0][0], wings[0][1], "a borboleta bate as asas");
-        assert_ne!(
-            art.critters.bird[0], art.critters.bird[1],
-            "o pássaro bate as asas"
+        assert_eq!(
+            art.critters.bird.len(),
+            usize::from(procedural::BIRD_FRAMES)
         );
     }
 }
