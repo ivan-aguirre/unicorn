@@ -1,8 +1,10 @@
 //! Unicórnio: jogo de plataforma para crianças pequenas.
 //!
-//! Um unicórnio fofo anda por um nível longo de grama, cachoeiras, nuvens e arco-íris
-//! coletando corações. A lógica (nível, física, corações, efeitos) é pura e testada sem
-//! janela; `render`, `audio` e `app` fazem a ligação com o macroquad.
+//! Dois modos, escolhidos na tela inicial (`menu`): no passeio, um unicórnio fofo anda por um
+//! nível longo de grama, cachoeiras, nuvens e arco-íris coletando corações; em `letters`,
+//! bolhas com letras sobem do lago e a criança aperta a tecla certa para estourá-las,
+//! treinando o teclado e a alfabetização. A lógica é pura e testada sem janela; `render`,
+//! `audio` e `app` fazem a ligação com o macroquad.
 
 pub mod ambient;
 pub mod animation;
@@ -15,7 +17,9 @@ pub mod effects;
 pub mod game;
 pub mod hearts;
 pub mod input;
+pub mod letters;
 pub mod level;
+pub mod menu;
 pub mod player;
 pub mod render;
 pub mod view;

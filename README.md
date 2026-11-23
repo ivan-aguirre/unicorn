@@ -1,27 +1,47 @@
 # Unicórnio
 
-Jogo de plataforma para crianças pequenas. Não há como perder:
-é só ajudar o unicórnio a juntar corações — a cada 50, tem festa e a contagem recomeça do zero.
+Jogo para crianças pequenas, com dois modos: passear e coletar corações e selecionar as letras no teclado.
+
+Não há como perder, o objetivo é iniciar a criança no uso do PC.
+
+![Tela inicial: passear ou letras](docs/menu.png)
+
+## Modos de jogo
+
+### Passear
+
+Um jogo de plataforma onde a criança ajuda o unicórnio a juntar corações. A cada 50 corações tem festa e a contagem recomeça do zero.
+
+![Passear](docs/screenshot.png)
+
+### Letras
+
+Para treinar o teclado do computador enquanto aprende as letras e algumas palavras.
+
+![Letras: bolha com a letra e a tecla acesa no teclado](docs/letras.png)
+
+![Letras: a palavra UVA sendo digitada](docs/letras_palavra.png)
 
 ## Disclaimer
 
 - Este código foi todo gerado por IA.
 - Fique à vontade para fazer fork, alterar e distribuir.
 - Não é permitida distribuição comercial (veja os detalhes da [licença](LICENSE.md)).
-- Se for distribuir, por favor mencione este repo como sendo o original.
+- Se for distribuir, mencione este repo como sendo o original.
 - Este jogo foi construído e testado no Linux Omarchy 4.5.0-3.
 - Este jogo não foi testado em Windows.
-
-![Unicórnio](docs/screenshot.png)
 
 ## Controles
 
 | Tecla | Ação |
 |---|---|
-| Seta direita / esquerda | Anda |
-| Espaço | Pula (segurar continua pulando) |
-| Enter | Pausa / continua |
-| Esc (segurar ~1,5 s) | Sai do jogo |
+| Seta esquerda / direita | Na tela inicial, escolhe o modo; no passeio, anda |
+| Enter ou espaço | Na tela inicial, começa o modo escolhido |
+| Espaço | No passeio, pula (segurar continua pulando) |
+| Enter | No passeio, pausa / continua |
+| Letras A–Z e Ç | No modo Letras, estouram a bolha da letra |
+| Seta para cima / para baixo (ou + / −) | No modo Letras, bolhas mais rápidas / mais lentas (5 níveis) |
+| Esc (segurar ~1,5 s) | Volta à tela inicial; na tela inicial, sai do jogo |
 | F11 | Tela cheia / janela |
 
 ## Rodando
@@ -40,13 +60,19 @@ cargo run --release
 
 ## Gerando o executável
 
-- **Linux**: `cargo build --release` → `target/release/unicorn` (um arquivo só, ~1,3 MB).
+- **Linux**: `cargo build --release` → `target/release/unicorn` (um arquivo só, ~1,4 MB).
 - **Windows**: no próprio Windows, `cargo build --release` → `target\release\unicorn.exe`
   (não precisa de nenhuma biblioteca extra).
 - **Windows a partir do Linux**: `rustup target add x86_64-pc-windows-gnu`, instalar o
   MinGW-w64 e rodar `cargo build --release --target x86_64-pc-windows-gnu`.
 
 Detalhes técnicos (arquitetura, qualidade, decisões) em [DESENVOLVIMENTO.md](DESENVOLVIMENTO.md).
+
+## Fonte
+
+As letras do modo Letras usam a fonte [Baloo 2](https://github.com/EkType/Baloo2), da Ek Type,
+sob a [SIL Open Font License 1.1](assets/fontes/OFL.txt). Ela vai embutida no executável, só
+com as letras e os dígitos (`scripts/gerar-fonte.sh`).
 
 ## Licença
 

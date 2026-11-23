@@ -16,7 +16,7 @@ use crate::art::flower_index;
 use crate::art::procedural::SUN_FRAMES;
 use crate::art::procedural::{GRASS_TIP, GROUND_TILE};
 use crate::art::unicorn::{FEET, FRAME_W, HEAD_AT};
-use crate::effects::ParticleKind;
+use crate::effects::{Effects, ParticleKind};
 use crate::game::Game;
 use crate::level::platform::THICKNESS;
 use crate::level::scenery::{
@@ -24,7 +24,7 @@ use crate::level::scenery::{
     RAINBOW_PARALLAX,
 };
 use crate::level::{Level, span};
-use crate::player::Facing;
+use crate::player::{Facing, Player};
 use crate::view::{VIEW_H, VIEW_H_PX, VIEW_W, VIEW_W_PX};
 
 /// Linha do horizonte (onde começa o mar).
@@ -74,27 +74,38 @@ pub fn offsets(step: usize, limit: f32) -> impl Iterator<Item = f32> {
         .take_while(move |v| *v < limit)
 }
 
-/// Desenha o mundo inteiro.
+/// Desenha o mundo inteiro do passeio.
 pub fn draw(tex: &Textures, game: &Game) {
-    let view = View {
-        cam: game.camera.snapped(),
-        time: game.time,
-    };
+    let cam = game.camera.snapped();
+    draw_scenery(tex, &game.level, cam, game.time);
+    draw_hearts(
+        tex,
+        game,
+        View {
+            cam,
+            time: game.time,
+        },
+    );
+    draw_player(tex, &game.player, cam);
+    draw_particles(tex, &game.effects, cam);
+}
+
+/// Cenário e chão vistos a partir de `cam`, sem corações nem unicórnio (o modo Letras e o
+/// menu usam o mesmo cenário).
+pub fn draw_scenery(tex: &Textures, level: &Level, cam: f32, time: f32) {
+    let view = View { cam, time };
     draw_sky(tex, view);
-    draw_clouds(tex, game, view, 0);
+    draw_clouds(tex, level, view, 0);
     ambient::draw_birds(tex, view.cam, view.time);
     draw_far(view);
     ambient::draw_fish(tex, view.cam, view.time);
-    draw_rainbows(tex, game, view);
-    draw_clouds(tex, game, view, 1);
-    draw_mesas(game, view);
-    draw_trees(tex, &game.level, view);
-    draw_ground(tex, &game.level, view);
-    draw_platforms(tex, &game.level, view);
-    draw_plants(tex, &game.level, view);
-    draw_hearts(tex, game, view);
-    draw_player(tex, game, view);
-    draw_particles(tex, game, view);
+    draw_rainbows(tex, level, view);
+    draw_clouds(tex, level, view, 1);
+    draw_mesas(level, view);
+    draw_trees(tex, level, view);
+    draw_ground(tex, level, view);
+    draw_platforms(tex, level, view);
+    draw_plants(tex, level, view);
 }
 
 fn draw_sky(tex: &Textures, view: View) {
@@ -107,11 +118,9 @@ fn draw_sky(tex: &Textures, view: View) {
     }
 }
 
-fn draw_clouds(tex: &Textures, game: &Game, view: View, layer: usize) {
-    let (Some(layer), Some(clouds)) = (
-        CLOUD_LAYERS.get(layer),
-        game.level.scenery.clouds.get(layer),
-    ) else {
+fn draw_clouds(tex: &Textures, level: &Level, view: View, layer: usize) {
+    let (Some(layer), Some(clouds)) = (CLOUD_LAYERS.get(layer), level.scenery.clouds.get(layer))
+    else {
         return;
     };
     for c in clouds {
@@ -132,15 +141,10 @@ fn draw_far(view: View) {
     ambient::draw_glints(view.cam, view.time);
 }
 
-fn draw_rainbows(tex: &Textures, game: &Game, view: View) {
+fn draw_rainbows(tex: &Textures, level: &Level, view: View) {
     let left = view.layer(RAINBOW_PARALLAX);
     let width = tex.rainbow.width();
-    for &x in span(
-        &game.level.scenery.rainbows,
-        |x| *x,
-        left - width,
-        left + VIEW_W,
-    ) {
+    for &x in span(&level.scenery.rainbows, |x| *x, left - width, left + VIEW_W) {
         let sx = x - left;
         draw_texture(&tex.rainbow, sx, SEA_Y - tex.rainbow.height() + 3.0, WHITE);
         ambient::draw_rainbow_sparkles(tex, sx, view.time);
@@ -151,14 +155,9 @@ fn draw_rainbows(tex: &Textures, game: &Game, view: View) {
     }
 }
 
-fn draw_mesas(game: &Game, view: View) {
+fn draw_mesas(level: &Level, view: View) {
     let left = view.layer(MESA_PARALLAX);
-    for m in span(
-        &game.level.scenery.mesas,
-        |m| m.x,
-        left - 210.0,
-        left + VIEW_W,
-    ) {
+    for m in span(&level.scenery.mesas, |m| m.x, left - 210.0, left + VIEW_W) {
         backdrop::draw_mesa(m, m.x - left, view.time);
     }
 }
@@ -324,8 +323,7 @@ fn draw_hearts(tex: &Textures, game: &Game, view: View) {
 }
 
 /// Pônei em camadas: corpo (patas, cauda, barriga) e cabeça (pela expressão).
-fn draw_player(tex: &Textures, game: &Game, view: View) {
-    let player = &game.player;
+pub fn draw_player(tex: &Textures, player: &Player, cam: f32) {
     let frame = tex.unicorn.get(player.pose().index());
     let head = tex.heads.get(player.expression().index());
     let (Some(frame), Some(head)) = (frame, head) else {
@@ -333,7 +331,7 @@ fn draw_player(tex: &Textures, game: &Game, view: View) {
     };
     let flip = player.facing == Facing::Left;
     let origin = Vec2::new(
-        (player.pos.x - view.cam - FEET.0).round(),
+        (player.pos.x - cam - FEET.0).round(),
         (player.pos.y - FEET.1).round(),
     );
     // Espelhado, a cabeça vai para o outro lado do quadro.
@@ -352,15 +350,16 @@ fn draw_player(tex: &Textures, game: &Game, view: View) {
     }
 }
 
-fn draw_particles(tex: &Textures, game: &Game, view: View) {
-    for p in game.effects.particles() {
+/// Brilhos, corações e estrelas dos efeitos.
+pub fn draw_particles(tex: &Textures, effects: &Effects, cam: f32) {
+    for p in effects.particles() {
         let t = match p.kind {
             ParticleKind::Sparkle => &tex.sparkle,
             ParticleKind::Heart => &tex.heart_small,
             ParticleKind::Star => &tex.star,
         };
         let fade = Color::new(1.0, 1.0, 1.0, (p.life * 3.0).min(1.0));
-        draw_centered(t, Vec2::new(p.pos.x - view.cam, p.pos.y), 1.0, fade);
+        draw_centered(t, Vec2::new(p.pos.x - cam, p.pos.y), 1.0, fade);
     }
 }
 

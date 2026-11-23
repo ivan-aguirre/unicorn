@@ -8,6 +8,7 @@ pub mod unicorn;
 use pixmap::{ArtError, Pixmap, rgb};
 use sprites::{OUTLINE, PALETTE};
 
+use crate::letters::words::Picture;
 use crate::level::scenery::FlowerColor;
 
 /// Tamanho do recheio do coração coletável (o contorno acrescenta 1 pixel em volta).
@@ -39,6 +40,8 @@ pub struct Art {
     pub soil: Pixmap,
     pub grass: Pixmap,
     pub glyphs: Vec<(char, Pixmap)>,
+    /// Figuras das palavras, na ordem de [`Picture::index`].
+    pub pictures: Vec<Pixmap>,
 }
 
 impl Art {
@@ -84,8 +87,20 @@ impl Art {
                     Pixmap::from_ascii(rows, PALETTE).map(|p| (*c, p.shadowed(outline)))
                 })
                 .collect::<Result<_, _>>()?,
+            pictures: Picture::ALL
+                .iter()
+                .map(|p| picture(*p, outline))
+                .collect::<Result<_, _>>()?,
         })
     }
+}
+
+/// Figura de uma palavra, com 1 pixel de margem para o contorno não ser cortado nas bordas.
+fn picture(p: Picture, outline: pixmap::Rgba) -> Result<Pixmap, ArtError> {
+    let drawn = Pixmap::from_ascii(sprites::picture(p), PALETTE)?;
+    let mut padded = Pixmap::new(drawn.width() + 2, drawn.height() + 2);
+    padded.overlay(&drawn, 1, 1);
+    Ok(padded.outlined(outline))
 }
 
 /// Índice da flor de cada cor em [`Art::flowers`].
@@ -173,6 +188,30 @@ mod tests {
         assert_eq!(art.unicorn.len(), Pose::COUNT);
         assert_eq!(art.heads.len(), Expression::COUNT);
         assert_eq!(art.glyphs.len(), sprites::GLYPHS.len());
+        assert_eq!(art.pictures.len(), Picture::ALL.len());
+    }
+
+    #[test]
+    fn figuras_tem_contorno_inteiro_e_tamanho_parecido() {
+        let art = Art::build().unwrap();
+        for p in &art.pictures {
+            assert!(
+                (16..=22).contains(&p.width()),
+                "{}x{}",
+                p.width(),
+                p.height()
+            );
+            assert!(
+                (13..=22).contains(&p.height()),
+                "{}x{}",
+                p.width(),
+                p.height()
+            );
+            // A margem garante o contorno nas bordas: nenhum pixel colorido encosta nelas.
+            for x in 0..p.width() {
+                assert!(!p.is_opaque(x, 0) || p.get(x, 0) == Some(rgb(OUTLINE)));
+            }
+        }
     }
 
     #[test]

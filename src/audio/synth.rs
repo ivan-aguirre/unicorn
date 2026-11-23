@@ -48,6 +48,20 @@ pub const CELEBRATE: &[Tone] = &[
 pub const PAUSE: &[Tone] = &[tone(880.0, 587.3, 110, Wave::Sine)];
 /// Bip de volta ao jogo.
 pub const RESUME: &[Tone] = &[tone(587.3, 880.0, 110, Wave::Sine)];
+/// "Plop" da bolha estourando: subida rápida e um brilho agudo.
+pub const POP: &[Tone] = &[
+    tone(420.0, 980.0, 60, Wave::Sine),
+    tone(1568.0, 1760.0, 90, Wave::Sine),
+];
+/// "Bup" suave da tecla errada: grave e curto, sem soar como erro.
+pub const MISS: &[Tone] = &[tone(233.1, 196.0, 120, Wave::Triangle)];
+/// Arpejo da palavra completa (sol-si-ré-sol).
+pub const WORD: &[Tone] = &[
+    tone(784.0, 784.0, 90, Wave::Sine),
+    tone(987.8, 987.8, 90, Wave::Sine),
+    tone(1174.7, 1174.7, 90, Wave::Sine),
+    tone(1568.0, 1568.0, 260, Wave::Sine),
+];
 
 /// Amostras (mono, -1 a 1) da sequência de tons.
 #[must_use]
@@ -124,7 +138,7 @@ pub fn wav(samples: &[f32]) -> Vec<u8> {
 mod tests {
     use super::*;
 
-    const ALL: [&[Tone]; 5] = [JUMP, HEART, CELEBRATE, PAUSE, RESUME];
+    const ALL: [&[Tone]; 8] = [JUMP, HEART, CELEBRATE, PAUSE, RESUME, POP, MISS, WORD];
 
     #[test]
     fn taxas_de_amostragem_coincidem() {

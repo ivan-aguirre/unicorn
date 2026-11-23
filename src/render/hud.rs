@@ -28,12 +28,13 @@ const HINT_SCALE: f32 = 2.0;
 /// Largura de um espaço entre palavras.
 const SPACE: f32 = 4.0;
 
-/// Desenha o placar e as camadas sobre o jogo (festa, pausa e saída).
+/// Desenha o placar e as camadas sobre o passeio (festa, pausa e saída).
 pub fn draw(tex: &Textures, game: &Game, quit_progress: f32) {
     draw_counter(tex, game.counter);
     let party = game.effects.celebration();
     if party > 0.0 {
-        draw_celebration(tex, party);
+        let goal = HeartCounter::GOAL.to_string();
+        draw_party(tex, party, Some(&goal));
     }
     if game.mode == Mode::Paused {
         draw_pause(tex);
@@ -57,8 +58,9 @@ fn draw_counter(tex: &Textures, counter: HeartCounter) {
     draw_rectangle(14.0, 45.0, filled, 6.0, color(0xff_4d_8d));
 }
 
-/// Arco-íris gigante surgindo e sumindo durante a festa, com o número da meta no meio.
-fn draw_celebration(tex: &Textures, remaining: f32) {
+/// Arco-íris gigante surgindo e sumindo durante a festa, com o número da meta (se houver) no
+/// meio.
+pub fn draw_party(tex: &Textures, remaining: f32, goal: Option<&str>) {
     let elapsed = CELEBRATION_TIME - remaining;
     let alpha = (elapsed * 3.0).min(remaining * 1.5).min(1.0);
     let tint = Color::new(1.0, 1.0, 1.0, alpha);
@@ -84,7 +86,9 @@ fn draw_celebration(tex: &Textures, remaining: f32) {
         let bob = (elapsed.mul_add(3.0, phase).sin() * 2.0).round();
         draw_centered(cloud, Vec2::new(foot, base_y + bob), 1.0, tint);
     }
-    draw_centered_text(tex, &HeartCounter::GOAL.to_string(), 150.0, PARTY_SCALE);
+    if let Some(goal) = goal {
+        draw_centered_text(tex, goal, 150.0, PARTY_SCALE);
+    }
 }
 
 fn draw_pause(tex: &Textures) {
@@ -100,7 +104,7 @@ fn draw_pause(tex: &Textures) {
 }
 
 /// Aviso de saída enquanto Esc está segurado, com a barra enchendo.
-fn draw_quit(tex: &Textures, progress: f32) {
+pub fn draw_quit(tex: &Textures, progress: f32) {
     let (w, h) = (220.0, 70.0);
     let (x, y) = ((VIEW_W - w) / 2.0, 20.0);
     draw_rectangle(x, y, w, h, Color::new(0.16, 0.1, 0.3, 0.85));

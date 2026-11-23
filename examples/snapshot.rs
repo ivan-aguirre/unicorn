@@ -8,9 +8,13 @@ use macroquad::prelude::*;
 use unicorn::art::Art;
 use unicorn::art::pixmap::Pixmap;
 use unicorn::camera::Camera;
+use unicorn::clock::STEP;
 use unicorn::game::{Game, Mode};
 use unicorn::input::Input;
+use unicorn::letters::Letters;
+use unicorn::letters::progress::{HITS_TO_ADVANCE, SETS};
 use unicorn::level::{Level, SEED};
+use unicorn::menu::{Choice, Menu, MenuInput};
 use unicorn::player::Player;
 use unicorn::render::Renderer;
 
@@ -22,6 +26,7 @@ fn conf() -> Conf {
         window_title: String::from("Unicórnio - capturas"),
         window_width: 1280,
         window_height: 720,
+        sample_count: 4,
         ..Default::default()
     }
 }
@@ -63,7 +68,97 @@ async fn main() {
     next_frame().await;
     save(&renderer, &format!("{dir}/sair.png"));
 
+    menu_and_letters(&renderer, &dir).await;
+
     sprite_sheet(&art, &format!("{dir}/sprites.png"));
+}
+
+/// Tela inicial e o modo Letras (capturas da janela: inclui o desenho suave).
+async fn menu_and_letters(renderer: &Renderer, dir: &str) {
+    menu_shot(renderer, dir).await;
+    let mut l = Letters::new(Level::generate(SEED), Rng::with_seed(3));
+    bubble_shots(&mut l, renderer, dir).await;
+    word_shots(&mut l, renderer, dir).await;
+}
+
+async fn menu_shot(renderer: &Renderer, dir: &str) {
+    let level = Level::generate(SEED);
+    let mut menu = Menu::new(Choice::Letters);
+    for _ in 0..30 {
+        menu.update(MenuInput::default(), 1.0 / 60.0);
+        renderer.draw_menu(&menu, &level, 0.0);
+        next_frame().await;
+    }
+    renderer.draw_menu(&menu, &level, 0.0);
+    save_screen(&format!("{dir}/menu.png"));
+    next_frame().await;
+}
+
+/// Bolha subindo com a tecla acesa, uma tecla errada e o estouro.
+async fn bubble_shots(l: &mut Letters, renderer: &Renderer, dir: &str) {
+    let letter = wait_bubble(l, renderer, 240).await;
+    shot(l, renderer, &format!("{dir}/letras_bolha.png")).await;
+    l.faster();
+    letters_frames(l, renderer, 10).await;
+    shot(l, renderer, &format!("{dir}/letras_velocidade.png")).await;
+    l.slower();
+    let wrong = if letter == 'Q' { 'W' } else { 'Q' };
+    l.step(STEP, &[wrong]);
+    letters_frames(l, renderer, 6).await;
+    shot(l, renderer, &format!("{dir}/letras_erro.png")).await;
+    l.step(STEP, &[letter]);
+    letters_frames(l, renderer, 7).await;
+    shot(l, renderer, &format!("{dir}/letras_estouro.png")).await;
+}
+
+/// Última fase: a palavra pela metade e completa.
+async fn word_shots(l: &mut Letters, renderer: &Renderer, dir: &str) {
+    let every_letter = SETS.iter().flat_map(|s| s.chars());
+    for c in every_letter.flat_map(|c| std::iter::repeat_n(c, HITS_TO_ADVANCE.into())) {
+        l.progress.hit(c);
+    }
+    for _ in 0..2 {
+        let c = wait_bubble(l, renderer, 0).await;
+        l.step(STEP, &[c]);
+    }
+    wait_bubble(l, renderer, 120).await;
+    shot(l, renderer, &format!("{dir}/letras_palavra.png")).await;
+    while l.words.as_ref().is_some_and(|w| w.showing() <= 0.0) {
+        let c = wait_bubble(l, renderer, 0).await;
+        l.step(STEP, &[c]);
+    }
+    letters_frames(l, renderer, 40).await;
+    shot(l, renderer, &format!("{dir}/letras_palavra_completa.png")).await;
+}
+
+/// Espera a próxima bolha e mais `frames` quadros de subida; devolve a letra dela.
+async fn wait_bubble(l: &mut Letters, renderer: &Renderer, frames: u32) -> char {
+    while l.bubble().is_none() {
+        letters_frames(l, renderer, 1).await;
+    }
+    letters_frames(l, renderer, frames).await;
+    l.bubble().map_or('A', |b| b.letter)
+}
+
+/// Simula e desenha `frames` quadros do modo Letras.
+async fn letters_frames(l: &mut Letters, renderer: &Renderer, frames: u32) {
+    for _ in 0..frames {
+        l.step(1.0 / 60.0, &[]);
+        renderer.draw_letters(l, 0.0);
+        next_frame().await;
+    }
+}
+
+/// Desenha o modo Letras e salva a janela.
+async fn shot(l: &Letters, renderer: &Renderer, path: &str) {
+    renderer.draw_letters(l, 0.0);
+    save_screen(path);
+    next_frame().await;
+}
+
+/// Salva a janela inteira (a tela virtual ampliada e o desenho suave por cima).
+fn save_screen(path: &str) {
+    get_screen_data().export_png(path);
 }
 
 fn teleport(game: &mut Game, x: f32) {

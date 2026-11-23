@@ -2,6 +2,7 @@
 //! O contorno escuro é acrescentado automaticamente (ver `Pixmap::outlined`).
 
 use super::pixmap::Palette;
+use crate::letters::words::Picture;
 
 /// Cores dos sprites.
 pub const PALETTE: &Palette = &[
@@ -31,6 +32,20 @@ pub const PALETTE: &Palette = &[
     (b'F', 0x3a_a2_4a),
     (b'P', 0xff_8c_cf),
     (b'p', 0xff_e1_4d),
+    // Figuras das palavras
+    (b'R', 0xf0_44_4a),
+    (b'r', 0xb8_28_3a),
+    (b'B', 0x4a_8a_f0),
+    (b'b', 0x2f_62_c0),
+    (b'N', 0x9a_5a_2a),
+    (b'n', 0xd9_a0_60),
+    (b'V', 0x9a_52_d8),
+    (b'v', 0xc8_9a_f5),
+    (b'T', 0x62_c8_50),
+    (b't', 0x2f_8a_3a),
+    (b'u', 0xc4_f0_9a),
+    (b'c', 0xff_f1_d6),
+    (b'G', 0xb8_b4_c8),
 ];
 
 /// Cor do contorno automático.
@@ -139,6 +154,276 @@ pub const FISH: &[&str] = &[
     "OOQQQOO.O",
     "..OOOO...",
 ];
+
+// Figuras das palavras do modo Letras (ver `letters::words::Picture`).
+
+/// Bola. 16x16.
+#[rustfmt::skip]
+const BALL: &[&str] = &[
+    ".....RRRRRR.....",
+    "...LRRRWWWBBB...",
+    "..LRRRWWWWWBBB..",
+    ".RRRRRWWWWWBBBB.",
+    ".RRRRWWWWWWWBBB.",
+    "RRRRRWWWWWWWBBBB",
+    "RRRRWWWYYWWWBBBB",
+    "RRRRWWYYYYWWBBBB",
+    "RRRRWWYYYYWWBBBB",
+    "RRRRWWWYYWWWBBBB",
+    "RRRRRWWWWWWWBBBb",
+    ".RRRRWWWWWWWBBb.",
+    ".rRRRRWWWWWBBBb.",
+    "..rRRRWWWWWBBb..",
+    "...rrRRWWWBbb...",
+    ".....rrrWbb.....",
+];
+
+/// Pato. 18x17.
+#[rustfmt::skip]
+const DUCK: &[&str] = &[
+    "..........YYYY....",
+    ".........YYYYYY...",
+    ".........YYYWEY...",
+    ".........YYYEEYOOO",
+    ".........YYYYYYOOO",
+    "..........YYYYY...",
+    "..........YYYY....",
+    "YY.......YYYYYY...",
+    "YYY....YYYYYYYYY..",
+    "YYYYYYYYYYYYYYYYY.",
+    "YYYYYYDDDDDYYYYYY.",
+    ".YYYYYYDDDDYYYYYY.",
+    "..YYYYYYYYYYYYYY..",
+    "...YYYYYYYYYYYY...",
+    ".....YYYYYYYYY....",
+    "........O..O......",
+    ".......OO.OO......",
+];
+
+/// Gato. 17x17.
+#[rustfmt::skip]
+const CAT: &[&str] = &[
+    "..O........O.....",
+    "..OO......OO.....",
+    "..OLO....OLO.....",
+    "..OOOOOOOOOO.....",
+    ".OOOOOOOOOOOO....",
+    ".OOWEOOOOWEOO....",
+    ".OOEEOOOOEEOO....",
+    ".OOOOOCCOOOOO....",
+    ".OOQOOEEOOQOO....",
+    "..OOOOOOOOOO.....",
+    "...OOOOOOOO....O.",
+    "..OOOQQQQOOO...O.",
+    ".OOOQQQQQQOOO..O.",
+    ".OOOQQQQQQOOO.OO.",
+    ".OOOQQQQQQOOOOO..",
+    ".OOOQQQQQQOOOO...",
+    "..QQ.QQ.QQ.QQ....",
+];
+
+/// Casa. 18x16.
+#[rustfmt::skip]
+const HOUSE: &[&str] = &[
+    "........rr........",
+    ".......rRRr.......",
+    "......rRRRRr......",
+    ".....rRRRRRRr.....",
+    "....rRRRRRRRRr....",
+    "...rRRRRRRRRRRr...",
+    "..rRRRRRRRRRRRRr..",
+    ".rrrrrrrrrrrrrrrr.",
+    "..cccccccccccccc..",
+    "..cBBBcccccccccc..",
+    "..cBWBccccNNNccc..",
+    "..cBBBccccNNNccc..",
+    "..ccccccccNNNccc..",
+    "..ccccccccNnNccc..",
+    "..ccccccccNNNccc..",
+    "FFFFFFFFFFFFFFFFFF",
+];
+
+/// Sapo. 17x14.
+#[rustfmt::skip]
+const FROG: &[&str] = &[
+    "..WWW.......WWW..",
+    ".WWEWW.....WWEWW.",
+    ".WWEWWTTTTTWWEWW.",
+    "..WWWTTTTTTTWWW..",
+    ".TTTTTTTTTTTTTTT.",
+    ".TTCCTTTTTTTCCTT.",
+    ".TTTtTTTTTTTtTTT.",
+    "..TTTtttttttTTT..",
+    "..TTTTTTTTTTTTT..",
+    ".TTTTuuuuuuuTTTT.",
+    "TTTTuuuuuuuuuTTTT",
+    "TTTTTuuuuuuuTTTTT",
+    "TTT.TTTTTTTTT.TTT",
+    "TT...TT...TT...TT",
+];
+
+/// Lua. 15x16.
+#[rustfmt::skip]
+const MOON: &[&str] = &[
+    ".....YYYY......",
+    "...YYYYY.......",
+    "..YYYYY........",
+    ".YYYYY.........",
+    ".YYYY..........",
+    "YYYYY..........",
+    "YYYY...........",
+    "YYEY...........",
+    "YYYE...........",
+    "YYYYY..........",
+    "YCYYY.........Y",
+    ".YYYYY.......Y.",
+    ".DYYYYYY...YYY.",
+    "..DDYYYYYYYYY..",
+    "....DDYYYYYY...",
+    "......DDDD.....",
+];
+
+/// Uva. 16x17.
+#[rustfmt::skip]
+const GRAPES: &[&str] = &[
+    "......N.FF......",
+    "......NFFFF.....",
+    "......N.FFFF....",
+    "..vVV.N.vVV.....",
+    ".vVVVVvVVVVV....",
+    ".VVVVVvVVVVVvVV.",
+    "..VVvVVVvVVvVVVV",
+    "..vVVVVvVVVVVVVV",
+    ".vVVVVVVVVvVVVV.",
+    ".VVVVvVVVVVVVV..",
+    "..VVVVVVvVVVV...",
+    "...vVVVVVVVVV...",
+    "...VVVVVvVVV....",
+    "....VVVVVVVV....",
+    ".....vVVVVV.....",
+    ".....VVVVV......",
+    "......VVV.......",
+];
+
+/// Pipa. 14x20.
+#[rustfmt::skip]
+const KITE: &[&str] = &[
+    "......RB......",
+    ".....RRBB.....",
+    "....RRRBBB....",
+    "...RRRRBBBB...",
+    "..RRRRRBBBBB..",
+    ".RRRRRRBBBBBB.",
+    "YYYYYYYTTTTTTT",
+    ".YYYYYYTTTTTT.",
+    "..YYYYYTTTTT..",
+    "...YYYYTTTT...",
+    "....YYYTTT....",
+    ".....YYTT.....",
+    "......YT......",
+    "......o.......",
+    ".......o......",
+    "......LoL.....",
+    "......o.......",
+    ".....o........",
+    "....LoL.......",
+    ".....o........",
+];
+
+/// Bolo. 18x16.
+#[rustfmt::skip]
+const CAKE: &[&str] = &[
+    "........Y.........",
+    "........R.........",
+    "........W.........",
+    "........W.........",
+    "..LLLLLLLLLLLLLL..",
+    ".LLLLLLRRLLLLLLLL.",
+    ".LLLLLLRRLLLLLLLL.",
+    ".LNLLLNNLLLNLLLNL.",
+    ".NNNNNNNNNNNNNNNN.",
+    ".NNNNNNNNNNNNNNNN.",
+    ".cccccccccccccccc.",
+    ".NNNNNNNNNNNNNNNN.",
+    ".NNNNNNNNNNNNNNNN.",
+    ".NNNNNNNNNNNNNNNN.",
+    "GGGGGGGGGGGGGGGGGG",
+    ".GGGGGGGGGGGGGGGG.",
+];
+
+/// Dado. 15x14.
+#[rustfmt::skip]
+const DIE: &[&str] = &[
+    ".WWWWWWWWWWWWW.",
+    "WWWWWWWWWWWWWWG",
+    "WWEEWWWWWWWEEWG",
+    "WWEEWWWWWWWEEWG",
+    "WWWWWWWWWWWWWWG",
+    "WWWWWWWWWWWWWWG",
+    "WWWWWWEEWWWWWWG",
+    "WWWWWWEEWWWWWWG",
+    "WWWWWWWWWWWWWWG",
+    "WWWWWWWWWWWWWWG",
+    "WWEEWWWWWWWEEWG",
+    "WWEEWWWWWWWEEWG",
+    "WWWWWWWWWWWWWWG",
+    ".GGGGGGGGGGGGG.",
+];
+
+/// Banana. 18x11.
+#[rustfmt::skip]
+const BANANA: &[&str] = &[
+    "..............NN..",
+    ".............NYN..",
+    "............YYY...",
+    "...........YYYD...",
+    "..........YYYYD...",
+    ".........YYYYD....",
+    "N.......YYYYYD....",
+    "NYY...YYYYYYD.....",
+    ".YYYYYYYYYYDD.....",
+    "..DYYYYYYYDD......",
+    "...DDDDDDDD.......",
+];
+
+/// Tomate. 16x15.
+#[rustfmt::skip]
+const TOMATO: &[&str] = &[
+    ".......FF.......",
+    ".......F........",
+    "...FFFFFFFFF....",
+    "..RRFFRFFRFFRR..",
+    ".RRRRRRRRRRRRRR.",
+    ".RWWRRRRRRRRRRR.",
+    "RRWRRRRRRRRRRRRR",
+    "RRRRRRRRRRRRRRRr",
+    "RRRRRRRRRRRRRRRr",
+    "RRRRRRRRRRRRRRrr",
+    "RRRRRRRRRRRRRRrr",
+    ".RRRRRRRRRRRRrr.",
+    ".rRRRRRRRRRRrrr.",
+    "..rrRRRRRRrrrr..",
+    "....rrrrrrrr....",
+];
+
+/// Desenho de cada figura das palavras.
+#[must_use]
+pub const fn picture(p: Picture) -> &'static [&'static str] {
+    match p {
+        Picture::Ball => BALL,
+        Picture::Duck => DUCK,
+        Picture::Cat => CAT,
+        Picture::House => HOUSE,
+        Picture::Frog => FROG,
+        Picture::Moon => MOON,
+        Picture::Grapes => GRAPES,
+        Picture::Kite => KITE,
+        Picture::Cake => CAKE,
+        Picture::Die => DIE,
+        Picture::Banana => BANANA,
+        Picture::Tomato => TOMATO,
+    }
+}
 
 /// Dígitos e as letras usadas nos avisos, em fonte 5x7 (branca; a sombra vem depois).
 #[rustfmt::skip]
@@ -333,6 +618,7 @@ mod tests {
             FISH,
         ];
         all.extend(GLYPHS.iter().map(|(_, g)| *g));
+        all.extend(Picture::ALL.map(picture));
         for rows in all {
             assert!(
                 Pixmap::from_ascii(rows, PALETTE).is_ok(),

@@ -1,10 +1,11 @@
 //! Envia a arte para a GPU (filtro "nearest" para manter os pixels nítidos) e monta o atlas.
 
-use macroquad::texture::{FilterMode, Texture2D, build_textures_atlas};
+use macroquad::texture::{FilterMode, Texture2D, build_textures_atlas, set_default_filter_mode};
 
 use crate::art::Art;
 use crate::art::pixmap::Pixmap;
 use crate::art::procedural::Tree;
+use crate::letters::words::Picture;
 
 /// Camadas de um quadro do unicórnio na GPU.
 pub struct UnicornFrame {
@@ -50,6 +51,7 @@ pub struct Textures {
     pub soil: Texture2D,
     pub grass: Texture2D,
     pub glyphs: Vec<(char, Texture2D)>,
+    pub pictures: Vec<Texture2D>,
 }
 
 impl Textures {
@@ -98,9 +100,19 @@ impl Textures {
             soil: texture(&art.soil),
             grass: texture(&art.grass),
             glyphs: art.glyphs.iter().map(|(c, p)| (*c, texture(p))).collect(),
+            pictures: art.pictures.iter().map(texture).collect(),
         };
+        // O atlas tem filtro próprio (linear por padrão): sem isto, tudo o que é desenhado
+        // ampliado sai borrado.
+        set_default_filter_mode(FilterMode::Nearest);
         build_textures_atlas();
         textures
+    }
+
+    /// Figura de uma palavra.
+    #[must_use]
+    pub fn picture(&self, p: Picture) -> Option<&Texture2D> {
+        self.pictures.get(p.index())
     }
 
     /// Textura de um caractere da fonte, se existir.

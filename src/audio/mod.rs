@@ -1,10 +1,12 @@
-//! Sons do jogo: sintetizados uma vez na inicialização e tocados conforme os eventos.
+//! Sons do jogo: sintetizados uma vez na inicialização e tocados conforme os eventos (do
+//! passeio e do modo Letras).
 
 pub mod synth;
 
 use macroquad::audio::{PlaySoundParams, Sound, load_sound_from_bytes, play_sound};
 
 use crate::game::{Events, Mode};
+use crate::letters::{LetterEvents, Press};
 
 /// Efeitos sonoros carregados.
 pub struct Sfx {
@@ -13,17 +15,38 @@ pub struct Sfx {
     celebrate: Sound,
     pause: Sound,
     resume: Sound,
+    pop: Sound,
+    miss: Sound,
+    word: Sound,
 }
 
 impl Sfx {
     /// Sintetiza e carrega os sons. Sem dispositivo de áudio, o jogo segue mudo.
     pub async fn load() -> Option<Self> {
+        let all = [
+            synth::JUMP,
+            synth::HEART,
+            synth::CELEBRATE,
+            synth::PAUSE,
+            synth::RESUME,
+            synth::POP,
+            synth::MISS,
+            synth::WORD,
+        ];
+        let mut sounds = Vec::with_capacity(all.len());
+        for tones in all {
+            sounds.push(load(tones).await?);
+        }
+        let [jump, heart, celebrate, pause, resume, pop, miss, word] = sounds.try_into().ok()?;
         Some(Self {
-            jump: load(synth::JUMP).await?,
-            heart: load(synth::HEART).await?,
-            celebrate: load(synth::CELEBRATE).await?,
-            pause: load(synth::PAUSE).await?,
-            resume: load(synth::RESUME).await?,
+            jump,
+            heart,
+            celebrate,
+            pause,
+            resume,
+            pop,
+            miss,
+            word,
         })
     }
 
@@ -41,6 +64,20 @@ impl Sfx {
             Some(Mode::Paused) => once(&self.pause),
             Some(Mode::Playing) => once(&self.resume),
             None => {}
+        }
+    }
+
+    /// Toca os sons do modo Letras: estouro ou tecla errada e, por cima, palavra ou festa.
+    pub fn play_letters(&self, events: LetterEvents) {
+        match events.press {
+            Some(Press::Popped) => once(&self.pop),
+            Some(Press::Missed) => once(&self.miss),
+            None => {}
+        }
+        if events.celebrated {
+            once(&self.celebrate);
+        } else if events.word_done {
+            once(&self.word);
         }
     }
 }
