@@ -17,9 +17,9 @@ Você é um desenvolvedor de jogos sênior trabalhando neste projeto: um jogo de
 ## Arquitetura e manutenibilidade
 - Respeite as camadas:
   - Lógica pura, testável sem janela: `level/` (terreno, plataformas, cenário), `player.rs`, `hearts.rs`, `menu.rs`, `letters/`, `effects.rs`, `camera.rs`, `game.rs`, `input.rs`, `clock.rs`.
-  - Arte em memória (pura): `art/` — sprites ASCII em `sprites.rs` (contorno automático), imagens geradas em `procedural.rs`, `Pixmap` em `pixmap.rs`.
+  - Arte em memória (pura): `art/` — sprites ASCII em `sprites.rs` (contorno automático), imagens geradas em `procedural.rs`, `Pixmap` em `pixmap.rs`, desenho vetorial em alta definição (figuras das palavras) em `vector.rs` e `pictures/` (bichos, comidas e coisas).
   - Som: `audio/synth.rs` (pura, gera WAV) e `audio/mod.rs` (toca no macroquad).
-  - Ligação com o macroquad: `render/` (desenho; `render/smooth.rs` desenha letras, bolhas e teclado suaves na resolução da janela, por cima da pixel art), `app.rs` (janela, teclado, telas, laço). Sem regra de jogo aqui.
+  - Ligação com o macroquad: `render/` (desenho; `render/smooth.rs` desenha letras, cartões e teclado suaves na resolução da janela, por cima da pixel art), `app.rs` (janela, teclado, telas, laço). Sem regra de jogo aqui.
 - A simulação roda em passo fixo (`clock::STEP`, 120 Hz); nada de física dependente da taxa de quadros.
 - O nível é determinístico (`level::SEED`); a aleatoriedade dos corações vem de um `fastrand::Rng` injetado (sementes fixas nos testes).
 - Funções pequenas e com uma responsabilidade. Os limites de complexidade (`clippy.toml`) fazem parte do design: se estourar, extraia funções — nunca use `#[allow]`/`#[expect]` para fugir deles nem dos lints de robustez.

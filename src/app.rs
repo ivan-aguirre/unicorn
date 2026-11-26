@@ -19,7 +19,7 @@ use crate::render::Renderer;
 
 /// Teclas de teste (F9 começa a festa dos corações): só nos builds de desenvolvimento.
 const TEST_KEYS: bool = cfg!(debug_assertions);
-/// Amostras por pixel do antisserrilhamento (bordas suaves das letras, bolhas e teclas).
+/// Amostras por pixel do antisserrilhamento (bordas suaves das letras, cartões e teclas).
 const MSAA_SAMPLES: i32 = 4;
 
 /// Configuração da janela: 2x a tela virtual, redimensionável.
@@ -176,12 +176,6 @@ impl App {
     }
 
     fn letters(&mut self, mut letters: Box<Letters>) -> Box<Letters> {
-        if pressed_any(&[KeyCode::Up, KeyCode::KpAdd, KeyCode::Equal]) {
-            letters.faster();
-        }
-        if pressed_any(&[KeyCode::Down, KeyCode::KpSubtract, KeyCode::Minus]) {
-            letters.slower();
-        }
         let mut events = LetterEvents::default();
         for _ in 0..self.clock.advance(get_frame_time()) {
             events = events.merge(letters.step(STEP, &self.typed));
@@ -205,11 +199,6 @@ impl App {
         }
         events
     }
-}
-
-/// Se alguma das teclas foi apertada neste quadro.
-fn pressed_any(keys: &[KeyCode]) -> bool {
-    keys.iter().any(|k| is_key_pressed(*k))
 }
 
 /// Volta ao menu com o modo de onde se saiu já escolhido.

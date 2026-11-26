@@ -1,4 +1,4 @@
-//! Tela inicial: escolher entre passear (o jogo dos corações) e letras (bolhas e teclado).
+//! Tela inicial: escolher entre passear (o jogo dos corações) e letras (digitar palavras).
 //! Sem texto para ler: dois desenhos grandes, setas para escolher e Enter (ou espaço) para
 //! começar.
 

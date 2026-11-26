@@ -1,18 +1,21 @@
 //! Tela inicial: o cenário ao fundo e dois cartões grandes, sem texto. À esquerda, o passeio
-//! (o unicórnio e corações); à direita, as letras (uma bolha com A e teclas).
+//! (o unicórnio e corações); à direita, as letras (o desenho de uma bola e as teclas de BOLA).
 
 use macroquad::color::{Color, WHITE};
 use macroquad::math::{Rect, Vec2};
 
-use super::letters::{draw_bubble, draw_key};
+use super::letters::draw_key;
 use super::scene::{self, color};
 use super::smooth::Painter;
 use super::textures::Textures;
 use crate::letters::KeyState;
 use crate::letters::keyboard::{KEY_H, KEY_W};
+use crate::letters::words::Picture;
 use crate::level::Level;
 use crate::menu::{Choice, Menu};
 
+/// Lado do desenho da bola no cartão das letras.
+const ICON_PICTURE: f32 = 84.0;
 /// Tamanho e centro dos cartões.
 const CARD: Vec2 = Vec2::new(200.0, 170.0);
 const CENTERS: [(Choice, Vec2); 2] = [
@@ -37,7 +40,7 @@ pub fn draw_smooth(p: &Painter<'_>, tex: &Textures, menu: &Menu) {
         draw_card(p, center, pulse, selected, menu.time);
         match choice {
             Choice::Walk => draw_walk_icon(p, tex, center, pulse),
-            Choice::Letters => draw_letters_icon(p, center, pulse, menu.time),
+            Choice::Letters => draw_letters_icon(p, tex, center, pulse, menu.time),
         }
     }
 }
@@ -80,20 +83,17 @@ fn draw_walk_icon(p: &Painter<'_>, tex: &Textures, center: Vec2, zoom: f32) {
     }
 }
 
-/// Letras: uma bolha com A e três teclas embaixo.
-fn draw_letters_icon(p: &Painter<'_>, center: Vec2, zoom: f32, time: f32) {
+/// Letras: o desenho da bola e as teclas da palavra BOLA embaixo, com a primeira acesa.
+fn draw_letters_icon(p: &Painter<'_>, tex: &Textures, center: Vec2, zoom: f32, time: f32) {
     let bob = (time * 2.0).sin() * 3.0;
-    draw_bubble(
-        p,
-        center + Vec2::new(0.0, bob - 22.0) * zoom,
-        36.0 * zoom,
-        time * 0.5,
-        Some('A'),
-    );
-    for (i, c) in ['A', 'B', 'C'].into_iter().enumerate() {
-        let x = f32::from(u8::try_from(i).unwrap_or(0)).mul_add(34.0, -49.0);
+    if let Some(t) = tex.picture(Picture::Ball) {
+        let at = center + Vec2::new(0.0, bob - 22.0) * zoom;
+        p.texture(t, at, ICON_PICTURE * zoom / t.width().max(1.0), WHITE);
+    }
+    for (i, c) in "BOLA".chars().enumerate() {
+        let x = f32::from(u8::try_from(i).unwrap_or(0)).mul_add(34.0, -66.0);
         let at = center + Vec2::new(x, 40.0) * zoom;
-        let state = if c == 'A' {
+        let state = if i == 0 {
             KeyState::Target
         } else {
             KeyState::Normal

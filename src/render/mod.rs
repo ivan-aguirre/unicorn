@@ -70,8 +70,8 @@ impl Renderer {
         self.present();
     }
 
-    /// Desenha um quadro do modo Letras: cenário em pixel art e, por cima, letras, bolha e
-    /// teclado suaves na resolução da janela.
+    /// Desenha um quadro do modo Letras: cenário em pixel art e, por cima, o cartão da palavra
+    /// e o teclado suaves na resolução da janela.
     pub fn draw_letters(&self, letters: &Letters, quit_progress: f32) {
         set_camera(&self.camera);
         letters::draw_pixels(&self.textures, letters);

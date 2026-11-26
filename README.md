@@ -1,6 +1,6 @@
 # Unicórnio
 
-Jogo para crianças pequenas, com dois modos: passear e coletar corações e selecionar as letras no teclado.
+Jogo para crianças pequenas, com dois modos: passear e coletar corações e digitar palavras no teclado.
 
 Não há como perder, o objetivo é iniciar a criança no uso do PC.
 
@@ -18,9 +18,14 @@ Um jogo de plataforma onde a criança ajuda o unicórnio a juntar corações. A 
 
 Para treinar o teclado do computador enquanto aprende as letras e algumas palavras.
 
-![Letras: bolha com a letra e a tecla acesa no teclado](docs/letras.png)
+Aparecem um desenho e a palavra dele. A criança digita a mesma palavra, letra por letra: a
+letra da vez fica marcada e a tecla dela acende no teclado da tela.
 
-![Letras: a palavra UVA sendo digitada](docs/letras_palavra.png)
+![Letras: a palavra DADO sendo digitada ao lado do desenho do dado](docs/letras.png)
+
+Com a palavra completa, ganha uma estrela e a festa do arco-íris; depois vem outra palavra.
+
+![Letras: a palavra completa, com a festa do arco-íris](docs/letras_festa.png)
 
 ## Disclaimer
 
@@ -39,8 +44,7 @@ Para treinar o teclado do computador enquanto aprende as letras e algumas palavr
 | Enter ou espaço | Na tela inicial, começa o modo escolhido |
 | Espaço | No passeio, pula (segurar continua pulando) |
 | Enter | No passeio, pausa / continua |
-| Letras A–Z e Ç | No modo Letras, estouram a bolha da letra |
-| Seta para cima / para baixo (ou + / −) | No modo Letras, bolhas mais rápidas / mais lentas (5 níveis) |
+| Letras A–Z e Ç | No modo Letras, digitam a palavra |
 | Esc (segurar ~1,5 s) | Volta à tela inicial; na tela inicial, sai do jogo |
 | F11 | Tela cheia / janela |
 

@@ -2,8 +2,8 @@
 //!
 //! Dois modos, escolhidos na tela inicial (`menu`): no passeio, um unicórnio fofo anda por um
 //! nível longo de grama, cachoeiras, nuvens e arco-íris coletando corações; em `letters`,
-//! bolhas com letras sobem do lago e a criança aperta a tecla certa para estourá-las,
-//! treinando o teclado e a alfabetização. A lógica é pura e testada sem janela; `render`,
+//! aparecem um desenho e a palavra dele, e a criança digita a mesma palavra, treinando o
+//! teclado e a alfabetização. A lógica é pura e testada sem janela; `render`,
 //! `audio` e `app` fazem a ligação com o macroquad.
 
 pub mod ambient;

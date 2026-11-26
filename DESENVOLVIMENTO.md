@@ -27,27 +27,29 @@ Detalhes técnicos do jogo Unicórnio. Para jogar e compilar, veja o [README](RE
   com o vento, pétalas caindo das cerejeiras, sol com raios girando e nuvens flutuando. Tudo é
   função do tempo, sem estado: leve.
 - **Tela inicial** (`src/menu.rs`): dois cartões grandes, sem texto: o passeio (cabeça do
-  unicórnio e corações) e as letras (bolha com A e teclas). Setas escolhem, Enter ou espaço
+  unicórnio e corações) e as letras (o desenho da bola e as teclas de BOLA). Setas escolhem, Enter ou espaço
   começa. Segurar Esc volta à tela inicial; na tela inicial, sai. O Esc precisa ser solto
   entre uma coisa e outra, então segurar demais não fecha o jogo sem querer.
-- **Modo Letras** (`src/letters/`), para treinar o teclado enquanto aprende as letras:
-  - uma bolha por vez sobe devagar do lago (~17 s até o alto na velocidade normal) com uma
-    letra maiúscula;
-  - seta para cima / para baixo (ou + / −) muda a velocidade de subida em 5 níveis, de 0,5x a
-    2x (começa em 1x); barrinhas embaixo do contador mostram o nível e se destacam por um
-    instante quando ele muda. O nível não é guardado entre partidas;
-  - um teclado ABNT2 desenhado embaixo acende a tecla da letra;
-  - a tecla certa estoura a bolha (brilhos e "plop"), o unicórnio comemora e o contador de
-    estrelas sobe;
-  - a tecla errada só pisca em cinza com um "bup" suave;
-  - a bolha que chega ao alto volta com a mesma letra, sem contar como erro;
-  - progressão automática: vogais (AEIOU), depois consoantes frequentes (BCDLMNPSTV), depois
-    o resto do alfabeto; cada letra precisa de 3 acertos para liberar a próxima leva, e as com
-    menos acertos aparecem mais;
-  - na última fase, uma figura aparece no alto com a palavra em espaços vazios (BOLA, PATO,
-    GATO, CASA, SAPO, LUA, UVA, PIPA, BOLO, DADO, BANANA, TOMATE) e as bolhas trazem as letras
-    em ordem; com a palavra completa, a figura pula, chovem estrelas e toca um arpejo;
-  - a cada 20 bolhas, a festa do arco-íris;
+- **Modo Letras** (`src/letters/`), para treinar o teclado enquanto aprende a ler:
+  - um cartão mostra um desenho, a palavra escrita e um espaço vazio por letra. São 40
+    palavras pensadas para a alfabetização (`src/letters/words.rs`): sem acento, só com
+    sílabas simples (consoante + vogal, ou vogal sozinha), sem dígrafos nem encontros
+    consonantais, de coisas que a criança reconhece: BOLA, PATO, GATO, CASA, SAPO, LUA, UVA,
+    PIPA, BOLO, DADO, BANANA, TOMATE, COPO, PERA, SINO, FOCA, RATO, JANELA, SAPATO, PIPOCA,
+    VACA, MACACO, GALO, GIRAFA, TUCANO, BALEIA, COCO, PIRULITO, SOPA, MALA, MESA, CAMA, VELA,
+    BOTA, NAVIO, LUPA, BULE, BONECA, FOGO, CANECA. Os desenhos ficam em `src/art/pictures/`,
+    separados em bichos, comidas e coisas.
+    Um teste garante a regra das sílabas;
+  - a criança digita a mesma palavra, em ordem: a letra da vez fica marcada na palavra e a
+    tecla dela acende num teclado ABNT2 desenhado embaixo;
+  - a letra certa entra no espaço dela com um "plop"; a tecla errada só pisca em cinza com um
+    "bup" suave, sem contar como erro;
+  - com a palavra completa vêm uma estrela e a festa do arco-íris (o fundo do cartão fica
+    transparente para ela aparecer); o desenho pula, o unicórnio comemora e, terminada a festa,
+    vem a próxima palavra (todas passam antes de repetir);
+  - os desenhos não são pixel art: são formas vetoriais (`src/art/vector.rs` e
+    `src/art/pictures/`) rasterizadas na inicialização em 384x384, com bordas suaves e
+    contorno, e desenhadas com filtro linear (nítidas até em tela cheia);
   - não há voz: só efeitos sonoros.
 - **Tolerância para mãos pequenas**: dá para pular logo após sair de uma beira, o toque em
   espaço pouco antes de tocar o chão é lembrado e sair exige segurar Esc (um toque acidental
@@ -80,18 +82,18 @@ não fazem nada:
   `#[allow]` no código.
 - **Testes**: unitários para toda a lógica e a arte (física, terreno, plataformas, cenário,
   corações, contador, animação, vida no cenário, efeitos, câmera, sprites, figuras, som, menu,
-  teclado, progressão das letras, bolha e palavras) e partidas simuladas de ponta a ponta,
+  teclado e palavras) e partidas simuladas de ponta a ponta,
   tudo sem janela:
   - `tests/gameplay.rs`: atravessar o nível inteiro, festa dos 50, pausa, pulo alcançando
     corações no alto;
-  - `tests/letters.rs`: uma criança que erra e demora e mesmo assim vai das vogais às
-    palavras; bolhas que continuam voltando sem ninguém jogar; teclas sem bolha que não
-    contam.
+  - `tests/letters.rs`: uma criança que erra e demora e mesmo assim completa várias
+    palavras; a palavra que fica esperando quando ninguém digita; todas as teclas apertadas
+    ao mesmo tempo.
 - **Conferência visual**: o exemplo `snapshot` gera capturas da tela virtual em vários pontos
   do nível, uma sequência de quadros para ver as animações, a festa, a pausa e a folha de
   sprites. Gera também capturas da janela inteira, com o desenho suave: o menu e, no modo
-  Letras, a bolha com a tecla acesa, a tecla errada, o estouro e a palavra pela metade e
-  completa.
+  Letras, o cartão da palavra vazio, pela metade com uma tecla errada, completo (com a festa)
+  e a palavra seguinte; e `palavras_1.png` e `palavras_2.png`, uma prévia de todas as palavras com os desenhos.
 - **Hook de pre-commit** roda `scripts/check.sh` e bloqueia o commit se algo falhar.
 
 ## Arquitetura
@@ -100,7 +102,7 @@ não fazem nada:
 src/
   app.rs        janela, teclado e laço principal (passo fixo de 120 Hz)
   menu.rs       tela inicial: escolha entre passear e letras
-  letters/      modo Letras: estado e passo (mod), bolha, progressão, palavras e teclado ABNT2
+  letters/      modo Letras: estado e passo (mod), palavras e teclado ABNT2
   game.rs       estado do passeio e um passo de simulação (pausa, corações, festa)
   player.rs     física do unicórnio (andar, pular, rampas, plataformas)
   animation.rs  pose do corpo e expressão do rosto a partir do movimento
@@ -111,10 +113,11 @@ src/
   camera.rs     câmera horizontal suave, olhando à frente
   input.rs      controles independentes da janela (e o "segurar Esc para sair")
   clock.rs      passo fixo de simulação
-  art/          pixel art em memória: sprites ASCII, imagens geradas, contorno automático
+  art/          pixel art em memória: sprites ASCII, imagens geradas, contorno automático;
+                desenhos vetoriais em alta definição das palavras (vector, pictures)
   audio/        efeitos sonoros sintetizados (WAV gerado em código)
   render/       desenho em tela virtual 640x360 ampliada, HUD, pausa, festa e saída; por cima,
-                desenho suave na resolução da janela (smooth): letras, bolhas, teclado, menu
+                desenho suave na resolução da janela (smooth): letras, cartões, teclado, menu
 assets/fontes/  fonte Baloo 2 reduzida (embutida) e a licença dela
 ```
 
@@ -132,7 +135,7 @@ A lógica não depende da janela: tudo em `level/`, `player`, `animation`, `ambi
   corpo, num tom mais escuro. Coração pela curva clássica do coração; céu, sol, nuvens,
   arco-íris, árvores, passarinhos e texturas do chão gerados por funções; sons sintetizados.
   Resultado: um único executável, sem pasta de assets nem licenças de terceiros.
-- **Letras suaves por cima da pixel art**: as letras, as bolhas e o teclado do modo Letras
+- **Letras suaves por cima da pixel art**: as letras, o cartão e o teclado do modo Letras
   ficavam serrilhados demais na tela virtual pequena e difíceis de ler. Por isso são desenhados
   depois da ampliação, direto na resolução da janela (`render/smooth.rs`), com formas
   antisserrilhadas (MSAA 4x) e uma fonte vetorial. As coordenadas continuam as da tela virtual,

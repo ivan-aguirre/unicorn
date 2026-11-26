@@ -1,12 +1,12 @@
 //! Desenho suave, na resolução da janela, por cima da tela virtual ampliada.
 //!
-//! As letras, as bolhas e o teclado do modo Letras ficariam serrilhados na tela virtual
+//! As letras, os cartões e o teclado do modo Letras ficariam serrilhados na tela virtual
 //! pequena: aqui eles são desenhados direto na janela (formas com antisserrilhamento e uma
 //! fonte vetorial), em coordenadas da tela virtual convertidas pela mesma escala da imagem.
 
 use macroquad::color::Color;
 use macroquad::math::{Rect, Vec2};
-use macroquad::shapes::{draw_arc, draw_poly, draw_rectangle};
+use macroquad::shapes::{draw_arc, draw_rectangle};
 use macroquad::text::{Font, TextParams, draw_text_ex, measure_text};
 use macroquad::texture::{DrawTextureParams, Texture2D, draw_texture_ex};
 use macroquad::window::{screen_height, screen_width};
@@ -14,7 +14,7 @@ use macroquad::window::{screen_height, screen_width};
 use super::viewport;
 use crate::view::VIEW_W;
 
-/// Lados dos círculos (suficiente para bolhas grandes sem facetas visíveis).
+/// Lados dos arcos dos cantos arredondados (sem facetas visíveis nos cartões grandes).
 const CIRCLE_SIDES: u8 = 72;
 /// Direções do contorno do texto (desenho repetido em volta).
 const OUTLINE_STEPS: u8 = 16;
@@ -27,14 +27,6 @@ pub struct TextStyle {
     pub fill: Color,
     /// Contorno: cor e espessura em pixels da tela virtual (0 = sem contorno).
     pub outline: (Color, f32),
-}
-
-/// Anel: centro, raio da borda de fora e espessura (na tela virtual).
-#[derive(Debug, Clone, Copy)]
-pub struct Ring {
-    pub center: Vec2,
-    pub radius: f32,
-    pub width: f32,
 }
 
 /// Pinta em coordenadas da tela virtual, convertidas para a janela.
@@ -58,20 +50,6 @@ impl<'a> Painter<'a> {
 
     fn at(&self, p: Vec2) -> Vec2 {
         self.origin + p * self.scale
-    }
-
-    /// Disco cheio.
-    pub fn disc(&self, center: Vec2, radius: f32, color: Color) {
-        let c = self.at(center);
-        draw_poly(c.x, c.y, CIRCLE_SIDES, radius * self.scale, 0.0, color);
-    }
-
-    /// Trecho de anel de `start` a `start + sweep` graus (0° à direita, sentido horário).
-    pub fn arc(&self, ring: Ring, (start, sweep): (f32, f32), color: Color) {
-        let c = self.at(ring.center);
-        let inner = (ring.radius - ring.width).max(0.0) * self.scale;
-        let w = ring.width.min(ring.radius) * self.scale;
-        draw_arc(c.x, c.y, CIRCLE_SIDES, inner, start, w, sweep, color);
     }
 
     /// Retângulo de cantos arredondados (sem sobreposição: funciona com transparência).

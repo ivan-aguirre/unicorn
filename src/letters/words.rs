@@ -1,8 +1,11 @@
-//! Palavras da última fase: cada uma com uma figura, digitadas letra por letra em ordem.
+//! Palavras do modo Letras: a figura e a palavra aparecem, e a criança digita a mesma palavra,
+//! letra por letra, em ordem. Com a palavra completa, tem festa.
 
 use fastrand::Rng;
 
-/// Figura de cada palavra (desenhada em `art::sprites`).
+use crate::effects::CELEBRATION_TIME;
+
+/// Figura de cada palavra (desenhada em `art::pictures`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Picture {
     Ball,
@@ -17,11 +20,39 @@ pub enum Picture {
     Die,
     Banana,
     Tomato,
+    Cup,
+    Pear,
+    Bell,
+    Seal,
+    Mouse,
+    Window,
+    Shoe,
+    Popcorn,
+    Cow,
+    Monkey,
+    Rooster,
+    Giraffe,
+    Toucan,
+    Whale,
+    Coconut,
+    Lollipop,
+    Soup,
+    Suitcase,
+    Table,
+    Bed,
+    Candle,
+    Boot,
+    Ship,
+    Magnifier,
+    Teapot,
+    Doll,
+    Fire,
+    Mug,
 }
 
 impl Picture {
     /// Todas as figuras, na ordem de [`Picture::index`].
-    pub const ALL: [Self; 12] = [
+    pub const ALL: [Self; 40] = [
         Self::Ball,
         Self::Duck,
         Self::Cat,
@@ -34,6 +65,34 @@ impl Picture {
         Self::Die,
         Self::Banana,
         Self::Tomato,
+        Self::Cup,
+        Self::Pear,
+        Self::Bell,
+        Self::Seal,
+        Self::Mouse,
+        Self::Window,
+        Self::Shoe,
+        Self::Popcorn,
+        Self::Cow,
+        Self::Monkey,
+        Self::Rooster,
+        Self::Giraffe,
+        Self::Toucan,
+        Self::Whale,
+        Self::Coconut,
+        Self::Lollipop,
+        Self::Soup,
+        Self::Suitcase,
+        Self::Table,
+        Self::Bed,
+        Self::Candle,
+        Self::Boot,
+        Self::Ship,
+        Self::Magnifier,
+        Self::Teapot,
+        Self::Doll,
+        Self::Fire,
+        Self::Mug,
     ];
 
     /// Posição na lista de figuras da arte.
@@ -52,6 +111,34 @@ impl Picture {
             Self::Die => 9,
             Self::Banana => 10,
             Self::Tomato => 11,
+            Self::Cup => 12,
+            Self::Pear => 13,
+            Self::Bell => 14,
+            Self::Seal => 15,
+            Self::Mouse => 16,
+            Self::Window => 17,
+            Self::Shoe => 18,
+            Self::Popcorn => 19,
+            Self::Cow => 20,
+            Self::Monkey => 21,
+            Self::Rooster => 22,
+            Self::Giraffe => 23,
+            Self::Toucan => 24,
+            Self::Whale => 25,
+            Self::Coconut => 26,
+            Self::Lollipop => 27,
+            Self::Soup => 28,
+            Self::Suitcase => 29,
+            Self::Table => 30,
+            Self::Bed => 31,
+            Self::Candle => 32,
+            Self::Boot => 33,
+            Self::Ship => 34,
+            Self::Magnifier => 35,
+            Self::Teapot => 36,
+            Self::Doll => 37,
+            Self::Fire => 38,
+            Self::Mug => 39,
         }
     }
 }
@@ -63,8 +150,12 @@ pub struct Word {
     pub picture: Picture,
 }
 
-/// Palavras curtas, sem acento e fáceis de desenhar.
-pub const WORDS: [Word; 12] = [
+/// Palavras para alfabetização, de figuras que uma criança pequena reconhece.
+///
+/// Sem acento e só com sílabas simples (consoante + vogal, ou vogal sozinha), sem dígrafos
+/// (CH, LH, NH) nem encontros consonantais. Juntas, passam por todas as vogais e pelas consoantes mais usadas
+/// no começo da leitura (B, C, D, F, G, J, L, M, N, P, R, S, T, V).
+pub const WORDS: [Word; 40] = [
     Word {
         text: "BOLA",
         picture: Picture::Ball,
@@ -113,10 +204,122 @@ pub const WORDS: [Word; 12] = [
         text: "TOMATE",
         picture: Picture::Tomato,
     },
+    Word {
+        text: "COPO",
+        picture: Picture::Cup,
+    },
+    Word {
+        text: "PERA",
+        picture: Picture::Pear,
+    },
+    Word {
+        text: "SINO",
+        picture: Picture::Bell,
+    },
+    Word {
+        text: "FOCA",
+        picture: Picture::Seal,
+    },
+    Word {
+        text: "RATO",
+        picture: Picture::Mouse,
+    },
+    Word {
+        text: "JANELA",
+        picture: Picture::Window,
+    },
+    Word {
+        text: "SAPATO",
+        picture: Picture::Shoe,
+    },
+    Word {
+        text: "PIPOCA",
+        picture: Picture::Popcorn,
+    },
+    Word {
+        text: "VACA",
+        picture: Picture::Cow,
+    },
+    Word {
+        text: "MACACO",
+        picture: Picture::Monkey,
+    },
+    Word {
+        text: "GALO",
+        picture: Picture::Rooster,
+    },
+    Word {
+        text: "GIRAFA",
+        picture: Picture::Giraffe,
+    },
+    Word {
+        text: "TUCANO",
+        picture: Picture::Toucan,
+    },
+    Word {
+        text: "BALEIA",
+        picture: Picture::Whale,
+    },
+    Word {
+        text: "COCO",
+        picture: Picture::Coconut,
+    },
+    Word {
+        text: "PIRULITO",
+        picture: Picture::Lollipop,
+    },
+    Word {
+        text: "SOPA",
+        picture: Picture::Soup,
+    },
+    Word {
+        text: "MALA",
+        picture: Picture::Suitcase,
+    },
+    Word {
+        text: "MESA",
+        picture: Picture::Table,
+    },
+    Word {
+        text: "CAMA",
+        picture: Picture::Bed,
+    },
+    Word {
+        text: "VELA",
+        picture: Picture::Candle,
+    },
+    Word {
+        text: "BOTA",
+        picture: Picture::Boot,
+    },
+    Word {
+        text: "NAVIO",
+        picture: Picture::Ship,
+    },
+    Word {
+        text: "LUPA",
+        picture: Picture::Magnifier,
+    },
+    Word {
+        text: "BULE",
+        picture: Picture::Teapot,
+    },
+    Word {
+        text: "BONECA",
+        picture: Picture::Doll,
+    },
+    Word {
+        text: "FOGO",
+        picture: Picture::Fire,
+    },
+    Word {
+        text: "CANECA",
+        picture: Picture::Mug,
+    },
 ];
 
-/// Tempo em que a palavra completa fica na tela antes da próxima.
-pub const SHOW_TIME: f32 = 2.5;
+/// Tempo em que a palavra completa fica na tela, com a festa, antes da próxima.
+pub const SHOW_TIME: f32 = CELEBRATION_TIME + 0.5;
 
 /// A palavra da vez e quantas letras dela já foram digitadas.
 #[derive(Debug, Clone)]
@@ -220,9 +423,29 @@ mod tests {
             assert_eq!(p.index(), i);
         }
         for w in WORDS {
-            assert!((3..=6).contains(&w.text.len()), "{}", w.text);
+            assert!((3..=8).contains(&w.text.len()), "{}", w.text);
             assert!(w.text.chars().all(|c| c.is_ascii_uppercase()), "{}", w.text);
         }
+    }
+
+    #[test]
+    fn palavras_so_com_silabas_simples_e_sem_repetir() {
+        let vowel = |c: char| "AEIOU".contains(c);
+        for w in WORDS {
+            let letters: Vec<char> = w.text.chars().collect();
+            // Duas consoantes seguidas seriam dígrafo (CH, LH, NH) ou encontro (BR, PL).
+            let pair = letters.windows(2).any(|p| !vowel(p[0]) && !vowel(p[1]));
+            assert!(!pair, "{} tem consoantes seguidas", w.text);
+            assert!(
+                vowel(letters[letters.len() - 1]),
+                "{} termina em consoante",
+                w.text
+            );
+        }
+        let mut texts: Vec<&str> = WORDS.iter().map(|w| w.text).collect();
+        texts.sort_unstable();
+        texts.dedup();
+        assert_eq!(texts.len(), WORDS.len());
     }
 
     /// Digita a palavra da vez inteira e espera a próxima.
@@ -238,7 +461,7 @@ mod tests {
             None,
             "sem letra enquanto mostra a palavra"
         );
-        for _ in 0..30 {
+        for _ in 0..50 {
             task.update(0.1, rng);
         }
         assert_eq!(task.typed(), 0);

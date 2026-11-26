@@ -17,7 +17,6 @@ pub struct Sfx {
     resume: Sound,
     pop: Sound,
     miss: Sound,
-    word: Sound,
 }
 
 impl Sfx {
@@ -31,13 +30,12 @@ impl Sfx {
             synth::RESUME,
             synth::POP,
             synth::MISS,
-            synth::WORD,
         ];
         let mut sounds = Vec::with_capacity(all.len());
         for tones in all {
             sounds.push(load(tones).await?);
         }
-        let [jump, heart, celebrate, pause, resume, pop, miss, word] = sounds.try_into().ok()?;
+        let [jump, heart, celebrate, pause, resume, pop, miss] = sounds.try_into().ok()?;
         Some(Self {
             jump,
             heart,
@@ -46,7 +44,6 @@ impl Sfx {
             resume,
             pop,
             miss,
-            word,
         })
     }
 
@@ -67,17 +64,15 @@ impl Sfx {
         }
     }
 
-    /// Toca os sons do modo Letras: estouro ou tecla errada e, por cima, palavra ou festa.
+    /// Toca os sons do modo Letras: letra certa ou tecla errada e, por cima, a festa.
     pub fn play_letters(&self, events: LetterEvents) {
         match events.press {
-            Some(Press::Popped) => once(&self.pop),
+            Some(Press::Hit) => once(&self.pop),
             Some(Press::Missed) => once(&self.miss),
             None => {}
         }
         if events.celebrated {
             once(&self.celebrate);
-        } else if events.word_done {
-            once(&self.word);
         }
     }
 }

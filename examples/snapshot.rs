@@ -12,11 +12,12 @@ use unicorn::clock::STEP;
 use unicorn::game::{Game, Mode};
 use unicorn::input::Input;
 use unicorn::letters::Letters;
-use unicorn::letters::progress::{HITS_TO_ADVANCE, SETS};
+use unicorn::letters::words::{WORDS, Word};
 use unicorn::level::{Level, SEED};
 use unicorn::menu::{Choice, Menu, MenuInput};
 use unicorn::player::Player;
 use unicorn::render::Renderer;
+use unicorn::render::smooth::{Painter, TextStyle};
 
 /// Posições do nível a fotografar (x do unicórnio).
 const SPOTS: [f32; 6] = [160.0, 2500.0, 7000.0, 15_000.0, 28_000.0, 54_200.0];
@@ -69,6 +70,7 @@ async fn main() {
     save(&renderer, &format!("{dir}/sair.png"));
 
     menu_and_letters(&renderer, &dir).await;
+    word_sheets(&renderer, &dir).await;
 
     sprite_sheet(&art, &format!("{dir}/sprites.png"));
 }
@@ -77,7 +79,6 @@ async fn main() {
 async fn menu_and_letters(renderer: &Renderer, dir: &str) {
     menu_shot(renderer, dir).await;
     let mut l = Letters::new(Level::generate(SEED), Rng::with_seed(3));
-    bubble_shots(&mut l, renderer, dir).await;
     word_shots(&mut l, renderer, dir).await;
 }
 
@@ -94,50 +95,60 @@ async fn menu_shot(renderer: &Renderer, dir: &str) {
     next_frame().await;
 }
 
-/// Bolha subindo com a tecla acesa, uma tecla errada e o estouro.
-async fn bubble_shots(l: &mut Letters, renderer: &Renderer, dir: &str) {
-    let letter = wait_bubble(l, renderer, 240).await;
-    shot(l, renderer, &format!("{dir}/letras_bolha.png")).await;
-    l.faster();
-    letters_frames(l, renderer, 10).await;
-    shot(l, renderer, &format!("{dir}/letras_velocidade.png")).await;
-    l.slower();
-    let wrong = if letter == 'Q' { 'W' } else { 'Q' };
-    l.step(STEP, &[wrong]);
-    letters_frames(l, renderer, 6).await;
-    shot(l, renderer, &format!("{dir}/letras_erro.png")).await;
-    l.step(STEP, &[letter]);
-    letters_frames(l, renderer, 7).await;
-    shot(l, renderer, &format!("{dir}/letras_estouro.png")).await;
-}
-
-/// Última fase: a palavra pela metade e completa.
+/// O cartão da palavra vazio, pela metade com uma tecla errada, completo (festa) e o seguinte.
 async fn word_shots(l: &mut Letters, renderer: &Renderer, dir: &str) {
-    let every_letter = SETS.iter().flat_map(|s| s.chars());
-    for c in every_letter.flat_map(|c| std::iter::repeat_n(c, HITS_TO_ADVANCE.into())) {
-        l.progress.hit(c);
-    }
-    for _ in 0..2 {
-        let c = wait_bubble(l, renderer, 0).await;
-        l.step(STEP, &[c]);
-    }
-    wait_bubble(l, renderer, 120).await;
+    letters_frames(l, renderer, 30).await;
     shot(l, renderer, &format!("{dir}/letras_palavra.png")).await;
-    while l.words.as_ref().is_some_and(|w| w.showing() <= 0.0) {
-        let c = wait_bubble(l, renderer, 0).await;
-        l.step(STEP, &[c]);
-    }
-    letters_frames(l, renderer, 40).await;
+    let word = l.words.word().text;
+    let (start, rest) = word.split_at(2);
+    type_text(l, start);
+    type_text(l, "Q");
+    letters_frames(l, renderer, 6).await;
+    shot(l, renderer, &format!("{dir}/letras_palavra_metade.png")).await;
+    type_text(l, rest);
+    letters_frames(l, renderer, 50).await;
     shot(l, renderer, &format!("{dir}/letras_palavra_completa.png")).await;
+    letters_frames(l, renderer, 240).await;
+    shot(l, renderer, &format!("{dir}/letras_palavra_seguinte.png")).await;
 }
 
-/// Espera a próxima bolha e mais `frames` quadros de subida; devolve a letra dela.
-async fn wait_bubble(l: &mut Letters, renderer: &Renderer, frames: u32) -> char {
-    while l.bubble().is_none() {
-        letters_frames(l, renderer, 1).await;
+/// Digita o texto, uma letra por passo.
+fn type_text(l: &mut Letters, text: &str) {
+    for c in text.chars() {
+        l.step(STEP, &[c]);
     }
-    letters_frames(l, renderer, frames).await;
-    l.bubble().map_or('A', |b| b.letter)
+}
+
+/// Prévia de todas as palavras do modo Letras, 20 por página.
+async fn word_sheets(renderer: &Renderer, dir: &str) {
+    for (page, words) in (1_u8..).zip(WORDS.chunks(20)) {
+        word_sheet(renderer, words, &format!("{dir}/palavras_{page}.png")).await;
+    }
+}
+
+/// Prévia de até 20 palavras do modo Letras, cada uma com o desenho dela.
+async fn word_sheet(renderer: &Renderer, words: &[Word], path: &str) {
+    let font = load_ttf_font_from_bytes(include_bytes!("../assets/fontes/Baloo2-ExtraBold.ttf"));
+    let painter = Painter::new(font.as_ref().ok());
+    clear_background(Color::from_hex(0x9e_d8_ff));
+    let ink = Color::from_hex(0x4b_3b_63);
+    let style = TextStyle {
+        size: 17.0,
+        fill: ink,
+        outline: (ink, 0.0),
+    };
+    for (i, word) in (0_u8..).zip(words) {
+        let cell = Vec2::new(f32::from(i % 5), f32::from(i / 5));
+        let center = cell * Vec2::new(126.0, 88.0) + Vec2::new(68.0, 48.0);
+        let card = Rect::new(center.x - 58.0, center.y - 42.0, 116.0, 84.0);
+        painter.rounded_rect(card, 12.0, WHITE);
+        if let Some(t) = renderer.textures().picture(word.picture) {
+            painter.texture(t, center - Vec2::new(0.0, 10.0), 56.0 / t.width(), WHITE);
+        }
+        painter.text(word.text, center + Vec2::new(0.0, 29.0), style);
+    }
+    save_screen(path);
+    next_frame().await;
 }
 
 /// Simula e desenha `frames` quadros do modo Letras.

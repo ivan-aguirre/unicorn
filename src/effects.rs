@@ -1,5 +1,5 @@
-//! Efeitos visuais leves: brilhos ao pegar coração ou estourar bolha, a chuva de estrelas da
-//! palavra completa e a festa ao completar a meta.
+//! Efeitos visuais leves: brilhos ao pegar coração e a festa ao completar a meta ou uma
+//! palavra.
 
 use fastrand::Rng;
 use macroquad::math::Vec2;
@@ -12,8 +12,6 @@ pub const MAX_PARTICLES: usize = 256;
 pub const CELEBRATION_TIME: f32 = 3.5;
 const SPARKLES_PER_HEART: u8 = 8;
 const CELEBRATION_PARTICLES: u8 = 72;
-/// Estrelas e brilhos ao completar uma palavra (uma festa menor, sem arco-íris).
-const SHOWER_PARTICLES: u8 = 28;
 const PARTICLE_GRAVITY: f32 = 270.0;
 
 /// Aparência de uma partícula.
@@ -75,17 +73,6 @@ impl Effects {
                 ParticleKind::Star
             } else {
                 ParticleKind::Heart
-            }
-        });
-    }
-
-    /// Chuva curta de estrelas e brilhos (palavra completa), sem o arco-íris da festa.
-    pub fn shower(&mut self, view_x: f32, view_w: f32) {
-        self.rain((view_x, view_w), SHOWER_PARTICLES, |i| {
-            if i % 2 == 0 {
-                ParticleKind::Star
-            } else {
-                ParticleKind::Sparkle
             }
         });
     }
@@ -179,20 +166,6 @@ mod tests {
         }
         assert!(fx.celebration().abs() < f32::EPSILON);
         assert_eq!(fx.particles(), []);
-    }
-
-    #[test]
-    fn chuva_de_estrelas_nao_comeca_a_festa() {
-        let mut fx = effects();
-        fx.shower(100.0, 384.0);
-        assert_eq!(fx.particles().len(), usize::from(SHOWER_PARTICLES));
-        assert!(fx.celebration().abs() < f32::EPSILON);
-        assert!(
-            fx.particles()
-                .iter()
-                .all(|p| (100.0..=484.0).contains(&p.pos.x))
-        );
-        assert!(fx.particles().iter().any(|p| p.kind == ParticleKind::Star));
     }
 
     #[test]

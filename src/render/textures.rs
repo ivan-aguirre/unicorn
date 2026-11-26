@@ -3,6 +3,7 @@
 use macroquad::texture::{FilterMode, Texture2D, build_textures_atlas, set_default_filter_mode};
 
 use crate::art::Art;
+use crate::art::pictures::{PICTURE_PX, picture};
 use crate::art::pixmap::Pixmap;
 use crate::art::procedural::Tree;
 use crate::letters::words::Picture;
@@ -51,6 +52,8 @@ pub struct Textures {
     pub soil: Texture2D,
     pub grass: Texture2D,
     pub glyphs: Vec<(char, Texture2D)>,
+    /// Figuras das palavras em alta definição, na ordem de [`Picture::index`]. Ficam fora do
+    /// atlas e com filtro linear: são desenhadas grandes e suaves, não como pixel art.
     pub pictures: Vec<Texture2D>,
 }
 
@@ -100,13 +103,16 @@ impl Textures {
             soil: texture(&art.soil),
             grass: texture(&art.grass),
             glyphs: art.glyphs.iter().map(|(c, p)| (*c, texture(p))).collect(),
-            pictures: art.pictures.iter().map(texture).collect(),
+            pictures: Vec::new(),
         };
         // O atlas tem filtro próprio (linear por padrão): sem isto, tudo o que é desenhado
         // ampliado sai borrado.
         set_default_filter_mode(FilterMode::Nearest);
         build_textures_atlas();
-        textures
+        Self {
+            pictures: pictures(),
+            ..textures
+        }
     }
 
     /// Figura de uma palavra.
@@ -120,6 +126,19 @@ impl Textures {
     pub fn glyph(&self, c: char) -> Option<&Texture2D> {
         self.glyphs.iter().find(|(g, _)| *g == c).map(|(_, t)| t)
     }
+}
+
+/// Figuras das palavras: criadas depois do atlas para ficarem de fora dele, com filtro linear.
+fn pictures() -> Vec<Texture2D> {
+    Picture::ALL
+        .iter()
+        .map(|p| {
+            let img = picture(*p, PICTURE_PX);
+            let t = Texture2D::from_rgba8(img.width(), img.height(), img.bytes());
+            t.set_filter(FilterMode::Linear);
+            t
+        })
+        .collect()
 }
 
 fn texture(p: &Pixmap) -> Texture2D {
